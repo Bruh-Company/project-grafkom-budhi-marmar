@@ -1,0 +1,22 @@
+{
+    "canvas-height" : 750,
+    "canvas-width" : 1000,
+    "fps" : 100,
+    "camera" : {
+        "view-angle" : 75,
+        "near-plane" : 0.1,
+        "far-plane" : 1000,
+        "initial-position" : {
+            "radius" : 30,
+            "h-angle" : 0,
+            "v-angle" : 20
+        }
+    },
+    "light" : {
+        "position" : {
+            "x" : 15,
+            "y" : 15,
+            "z" : 0
+        }
+    }
+}
