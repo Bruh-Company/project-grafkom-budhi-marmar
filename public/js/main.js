@@ -2,8 +2,10 @@ import * as THREE from '/three.module.js';
 import * as Ball from './ball.js';
 import * as Board from './board.js';
 import * as Room from './room.js';
+import * as Lamp from './lamp.js';
 
-const innerWidth = __windowConfig["canvas-width"];
+//const innerWidth = __windowConfig["canvas-width"];
+const innerWidth = document.getElementById('app').clientWidth;
 const innerHeight = __windowConfig["canvas-height"];
 const msPerFrame = 1000 / __windowConfig["fps"];
 
@@ -32,10 +34,12 @@ let isMouseDown = [false, false, false];
 let initialMousePosition;
 let initialCameraPosition;
 let currentMousePosition;
+let raycaster;
 
 window.oncontextmenu = (e) => {
     e.preventDefault();
 };
+
 window.onmousedown = (e) => {
     if(e.which == 2) e.preventDefault();
 };
@@ -43,6 +47,7 @@ window.onmousedown = (e) => {
 document.body.onload = () => {
     Board.showInfo();
     Ball.showInfo();
+    Room.showInfo();
 
     let shader = THREE.ShaderChunk.shadowmap_pars_fragment;
     shader = shader.replace(
@@ -76,13 +81,17 @@ document.body.onload = () => {
     scene.add(Ball.object);
     scene.add(Board.object);
     scene.add(Room.object);
+    scene.add(Lamp.object);
     scene.add(camera);
     scene.background = new THREE.Color(0x222222);
+    
     
     renderer.setSize(innerWidth, innerHeight);
     renderer.setPixelRatio(devicePixelRatio);
     renderer.shadowMap.enabled = true;
     renderer.outputEncoding = THREE.sRGBEncoding;
+
+    raycaster = new THREE.Raycaster();
 
     let dom = renderer.domElement;
     dom.oncontextmenu = (e) => {
@@ -105,6 +114,8 @@ function animate() {
 }
 
 function tick() {
+    camera.updateMatrixWorld();
+
     mouseHandler();
     
     intersectCheck();
@@ -112,7 +123,7 @@ function tick() {
     Ball.tick();
     Board.tick();
 }
-let v = 1;
+
 function intersectCheck(){
     const brd = Board.object.geometry;
     const pos = brd.attributes.position.array;
@@ -138,11 +149,6 @@ function intersectCheck(){
     if(any){
         Ball.collision();
     }
-
-    if(v == 1){
-        console.log(arr);
-        v = 0;
-    }
 }
 
 function mouseHandler(){
@@ -151,22 +157,44 @@ function mouseHandler(){
 
     if(currentMousePosition == null) return;
     (() => {
+        let t = 0;
+        if(isMouseDown.some(b => b)) t = Math.sqrt(Math.abs(initialMousePosition.y - currentMousePosition.y)) * Math.PI / 180;
+
         if(isMouseDown[0]){
-            
+            raycaster.setFromCamera(new THREE.Vector2(
+                (initialMousePosition.x / window.innerWidth) * 2 - 1,
+                - (initialMousePosition.y / window.innerHeight) * 2 + 1), camera );
+
+            const intersect = raycaster.intersectObjects( [Board.object] );
+
+            if (intersect.length > 0){
+                //Board.object.material.emissive = 0xffffff;
+            }
         }else if(isMouseDown[1]){
             //zoom
-            let t = 20 *  Math.sqrt(Math.abs(initialMousePosition.y - currentMousePosition.y)) * Math.PI / 180;
+            t = 20 * t;
             if(initialMousePosition.y >= currentMousePosition.y) cameraPosition.radius = initialCameraPosition.radius - t;
             else cameraPosition.radius = initialCameraPosition.radius + t;
         }else if(isMouseDown[2]){
             //horizontalMoving
             cameraPosition.hAngle = initialCameraPosition.hAngle + (initialMousePosition.x - currentMousePosition.x) * Math.PI / 180 / 5;
             //verticalMoving
-            let t = Math.sqrt(Math.abs(initialMousePosition.y - currentMousePosition.y)) * Math.PI / 180;
             if(initialMousePosition.y >= currentMousePosition.y) cameraPosition.vAngle = initialCameraPosition.vAngle - t;
             else cameraPosition.vAngle = initialCameraPosition.vAngle + t;
         }
     })();
+}
+
+function getMousePos(event){
+    const canvas = document.getElementById("app").children[0];
+    //console.log(canvas);
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    return {
+        x : x,
+        y : y
+    }
 }
 
 function mouseDown(event){
@@ -175,20 +203,26 @@ function mouseDown(event){
         if(isMouseDown.some(b => b)) return;
         if(!isMouseDown[i]){
             isMouseDown[i] = true;
-            initialMousePosition = {
-                x : event.pageX,
-                y : event.pageY
-            };
+            initialMousePosition = getMousePos(event);
             initialCameraPosition = JSON.parse(JSON.stringify(cameraPosition));
         }
     }
 }
 
 function mouseMove(event){
-    currentMousePosition = {
-        x : event.pageX,
-        y : event.pageY
-    };
+    currentMousePosition = getMousePos(event);
+
+    raycaster.setFromCamera(new THREE.Vector2(
+        (currentMousePosition.x / window.innerWidth) * 2 - 1,
+        - (currentMousePosition.y / window.innerHeight) * 2 + 1), camera );
+
+    const intersect = raycaster.intersectObjects( [Board.object] );
+
+    if (intersect.length > 0){
+        Board.object.material.emissive.setHex(0xff0000);
+    }else{
+        Board.object.material.emissive.setHex(0x000000);
+    }
 }
 
 function mouseUp(event){
@@ -200,9 +234,9 @@ function mouseUp(event){
 }
 
 function setCamPosition(){
-    while(cameraPosition.vAngle < 0) cameraPosition.vAngle += Math.PI * 2;
+    while(cameraPosition.vAngle < -2 * Math.PI) cameraPosition.vAngle += Math.PI * 2;
     while(cameraPosition.vAngle > 2 * Math.PI) cameraPosition.vAngle -= Math.PI * 2;
-    while(cameraPosition.hAngle < 0) cameraPosition.hAngle += Math.PI * 2;
+    while(cameraPosition.hAngle < -2 * Math.PI) cameraPosition.hAngle += Math.PI * 2;
     while(cameraPosition.hAngle > 2 * Math.PI) cameraPosition.hAngle -= Math.PI * 2;
     camera.position.set(
         cameraPosition.radius * Math.cos(cameraPosition.vAngle) * Math.sin(cameraPosition.hAngle),
@@ -216,11 +250,11 @@ function vCamPositioning(){
     if(!isMouseDown[2]){
         const t = __windowConfig["camera"]["initial-position"]["v-angle"] * Math.PI / 180;
         if(Math.abs(cameraPosition.vAngle - t) < deltaComputation) cameraPosition.vAngle = t;
-        else cameraPosition.vAngle = (cameraPosition.vAngle + t) / 2;
+        else cameraPosition.vAngle = (cameraPosition.vAngle * 9 + t) / 10;
     }
     if(!isMouseDown[1]){
         const t = __windowConfig["camera"]["initial-position"]["radius"];
         if(Math.abs(cameraPosition.radius - t) < deltaComputation) cameraPosition.radius = t;
-        else cameraPosition.radius = (cameraPosition.radius + t) / 2;
+        else cameraPosition.radius = (cameraPosition.radius * 9 + t) / 10;
     }
 }

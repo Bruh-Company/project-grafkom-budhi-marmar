@@ -5,7 +5,7 @@ const ballColor = __objectConfig["ball"]["color"];
 const ballRho = __objectConfig["ball"]["rho"];
 
 const geometry = new THREE.SphereGeometry(ballRadius, 32, 32);
-const mesh = new THREE.MeshPhongMaterial( {color : ballColor} );
+const mesh = new THREE.MeshPhongMaterial( {color : ballColor, shininess: 40} );
 const object = new THREE.Mesh(geometry, mesh);
 
 let nextPosition = 10;

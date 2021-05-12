@@ -21,6 +21,7 @@ let physic = {
 }
 
 const showInfo = () => {
+    console.log("Board : ");
     console.log(object.geometry);
 }
 
