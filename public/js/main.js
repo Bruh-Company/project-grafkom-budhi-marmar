@@ -1,4 +1,5 @@
 import * as THREE from '/three.module.js';
+import Stats from '/stats.module.js';
 import * as Ball from './ball.js';
 import * as Board from './board.js';
 import * as Room from './room.js';
@@ -17,7 +18,7 @@ const scene = new THREE.Scene();
 const directLight = new THREE.PointLight(0xffffff, 0.8, 100);
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
 const pointLightHelper = new THREE.PointLightHelper(directLight);
-const renderer = new THREE.WebGLRenderer();
+const renderer = new THREE.WebGLRenderer({ antialias: true });
 const camera = new THREE.PerspectiveCamera(
     camViewAngle,
     innerWidth / innerHeight,
@@ -25,6 +26,7 @@ const camera = new THREE.PerspectiveCamera(
     camFarPlane
 );
 
+let stats;
 let cameraPosition = {
     radius : __windowConfig["camera"]["initial-position"]["radius"],
     hAngle : __windowConfig["camera"]["initial-position"]["h-angle"] * Math.PI / 180,
@@ -93,6 +95,8 @@ document.body.onload = () => {
 
     raycaster = new THREE.Raycaster();
 
+    stats = new Stats();
+
     let dom = renderer.domElement;
     dom.oncontextmenu = (e) => {
         e.preventDefault();
@@ -103,6 +107,9 @@ document.body.onload = () => {
     dom.onmouseout = mouseUp;
     document.getElementById("app").appendChild(dom);
 
+    document.getElementById("app").appendChild(stats.dom);
+    stats.dom.style.position = 'absolute';
+
     animate();
 
     setInterval(tick, msPerFrame);
@@ -111,6 +118,7 @@ document.body.onload = () => {
 function animate() {
     requestAnimationFrame(animate);
     renderer.render(scene, camera);
+    stats.update();
 }
 
 function tick() {
@@ -187,7 +195,6 @@ function mouseHandler(){
 
 function getMousePos(event){
     const canvas = document.getElementById("app").children[0];
-    //console.log(canvas);
     const rect = canvas.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
