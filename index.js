@@ -28,7 +28,7 @@ app.listen(portNumber, () => {
 
 app.engine('html', require('ejs').renderFile);
 
-app.use(express.static('public/js'));
+app.use(express.static('public/js-src'));
 
 /**
  * request
