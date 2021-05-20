@@ -1,23 +1,40 @@
 import * as THREE from '../three-module/three.module.js';
 
-const sideLength = __objectConfig["board"]["side-length"];
-const sideThickness = __objectConfig["board"]["thickness"]
-const boardColor = __objectConfig["board"]["color"];
-const boardRho = __objectConfig["board"]["rho"];
+let sideLength;
+let sideThickness;
+let boardColor;
+let boardRho;
 
-const geometry = new THREE.BoxGeometry(sideLength, sideThickness, sideLength);
-const mesh = new THREE.MeshPhongMaterial( {color : boardColor/** , wireframe : true*/} );
-const object = new THREE.Mesh(geometry, mesh);
+let geometry;
+let mesh;
+let object;
 
-const mass = boardRho * sideLength * sideLength * sideThickness;
+let physic;
 
-object.position.set(0, - sideThickness / 2, 0);
-object.receiveShadow = true;
+const initialize = (objectConfig) => {
+    sideLength = objectConfig["side-length"];
+    sideThickness = objectConfig["thickness"]
+    boardColor = objectConfig["color"];
+    boardRho = objectConfig["rho"];
 
-let physic = {
-    volume : sideLength * sideLength * sideThickness,
-    mass : boardRho * sideLength * sideLength * sideThickness,
-    velocity : new Vec3()
+    geometry = new THREE.BoxGeometry(sideLength, sideThickness, sideLength);
+    mesh = new THREE.MeshPhongMaterial( {color : boardColor , /**wireframe : true*/} );
+    object = new THREE.Mesh(geometry, mesh);
+
+    object.position.set(0, - sideThickness / 2, 0);
+    object.castShadow = true;
+    object.receiveShadow = true;
+
+    physic = {
+        volume : sideLength * sideLength * sideThickness,
+        mass : boardRho * sideLength * sideLength * sideThickness,
+        angle : 0,
+        angle_velocity : 0,
+        vector_rotation : new THREE.Vector3(1, 0, 0)
+    }
+
+    //tester
+    //object.quaternion.copy(new THREE.Quaternion().setFromAxisAngle(physic.vector_rotation.normalize(), physic.angle));
 }
 
 const showInfo = () => {
@@ -29,4 +46,51 @@ const tick = () => {
     
 }
 
-export { object, showInfo, tick, mass };
+//a -> angle
+const rotateBoard = (a) => {
+    if(physic.vector_rotation.equals(new THREE.Vector3(0, 1, 0))) return;
+
+    let deltaAngle = a - physic.angle;
+    physic.angle_velocity = deltaAngle * fps;
+    physic.angle = a;
+    
+    object.quaternion.copy(new THREE.Quaternion().setFromAxisAngle(physic.vector_rotation.normalize(), physic.angle));
+}
+
+const getMomentumAt = (point, normal) => {
+    let force = new THREE.Vector3().subVectors(point, object.position);
+    //console.log(new THREE.Vector3().crossVectors(force, physic.vector_rotation));
+    force = new THREE.Vector3().crossVectors(physic.vector_rotation, force);
+    force.setLength(Math.abs(physic.angle_velocity)).projectOnVector(normal);
+    if (physic.angle_velocity < 0) force.negate();
+
+    let temp = new THREE.Vector3().addVectors(normal.setLength(physic.angle_velocity), force).length();
+    if (temp < physic.angle_velocity) return new THREE.Vector3();
+    return force;
+}
+
+const getQuaternion = () => {
+    return object.quaternion;
+}
+
+const setVectorRotation = (vr) => {
+    physic.vector_rotation.copy(vr);
+}
+
+const invertVectorRotation = () => {
+    physic.vector_rotation.negate();
+}
+
+const boardPositioning = (e) => {
+    if(e){
+        if (Math.abs(physic.angle) <= deltaComputation){
+            rotateBoard(0);
+            return false;
+        }
+
+        rotateBoard(physic.angle * 9 / 10);
+        return true;
+    }
+}
+
+export { object, initialize, showInfo, tick, getQuaternion, rotateBoard, getMomentumAt, setVectorRotation, invertVectorRotation, boardPositioning };

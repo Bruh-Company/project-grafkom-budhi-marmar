@@ -1,116 +1,8 @@
-class Vec3{
-    constructor(a = 0, b = 0, c = 0){
-        this.x = a;
-        this.y = b;
-        this.z = c;
-    }
-
-    abs(){
-        return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
-    }
-
-    sum(){
-        return this.x + this.y + this.z;
-    }
-}
-
-const times = (a, b) => {
-    if(typeof(a) === "number" && b instanceof Vec3){
-        return new Vec3(
-            a * b.x,
-            a * b.y,
-            a * b.z
-        );
-    }else if(typeof(b) === "number" && a instanceof Vec3){
-        return new Vec3(
-            b * a.x,
-            b * a.y,
-            b * a.z
-        );
-    }else if(a instanceof Vec3 && b instanceof Vec3){
-        return new Vec3(
-            b.x * a.x,
-            b.y * a.y,
-            b.z * a.z
-        );
-    }
-}
-
-const add = (a, b) => {
-    if(typeof(a) === "number" && b instanceof Vec3){
-        return new Vec3(
-            a + b.x,
-            a + b.y,
-            a + b.z
-        );
-    }else if(typeof(b) === "number" && a instanceof Vec3){
-        return new Vec3(
-            b + a.x,
-            b + a.y,
-            b + a.z
-        );
-    }else if(a instanceof Vec3 && b instanceof Vec3){
-        return new Vec3(
-            b.x + a.x,
-            b.y + a.y,
-            b.z + a.z
-        );
-    }
-}
-
-const divide = (a, b) => {
-    if(typeof(a) === "number" && b instanceof Vec3){
-        return new Vec3(
-            a / b.x,
-            a / b.y,
-            a / b.z
-        );
-    }else if(typeof(b) === "number" && a instanceof Vec3){
-        return new Vec3(
-            a.x / b,
-            a.y / b,
-            a.z / b
-        );
-    }else if(a instanceof Vec3 && b instanceof Vec3){
-        return new Vec3(
-            a.x / b.x,
-            a.y / b.y,
-            a.z / b.z
-        );
-    }
-}
-
-const substract = (a, b) => {
-    if(typeof(a) === "number" && b instanceof Vec3){
-        return new Vec3(
-            a - b.x,
-            a - b.y,
-            a - b.z
-        );
-    }else if(typeof(b) === "number" && a instanceof Vec3){
-        return new Vec3(
-            a.x - b,
-            a.y - b,
-            a.z - b
-        );
-    }else if(a instanceof Vec3 && b instanceof Vec3){
-        return new Vec3(
-            a.x - b.x,
-            a.y - b.y,
-            a.z - b.z
-        );
-    }
-}
-
-const dot = (a, b) => {
-    if(a instanceof Vec3 && b instanceof Vec3){
-        return times(a, b).sum();
-    }
-}
+import {Vector3} from '../three-module/three.module.js';
 
 const trigono = (a, b) => {
-    if(a instanceof Vec3 && b instanceof Vec3){
-        let ang = dot(a, b) / (a.abs() * b.abs());
+    if(a instanceof Vector3 && b instanceof Vector3){
+        let ang = a.dot(b) / (abs(a) * abs(b));
         return {
             angle : ang,
             cos : Math.cos(ang),
@@ -119,3 +11,17 @@ const trigono = (a, b) => {
         }
     }
 }
+
+const abs = (a) => {
+    if(a instanceof Vector3){
+        return Math.sqrt(a.x * a.x + a.y * a.y + a.z * a.z);
+    }
+}
+
+const sum = (a) => {
+    if(a instanceof Vector3){
+        return a.x + a.y + a.z;
+    }
+}
+
+export { trigono, abs, sum };

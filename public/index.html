@@ -5,29 +5,28 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BRUH</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <style type="text/css">
         html, body{
             margin: 0;
             padding: 0;
             max-width: 100vw;
             overflow-x: hidden;
+            scroll-behavior: smooth;
         }
 
-        ::-webkit-scrollbar-track
-        {
+        ::-webkit-scrollbar-track{
             -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
             background-color: #F5F5F5;
             border-radius: 6px;
         }
 
-        ::-webkit-scrollbar
-        {
+        ::-webkit-scrollbar{
             width: 6px;
             background-color: #F5F5F5;
         }
 
-        ::-webkit-scrollbar-thumb
-        {
+        ::-webkit-scrollbar-thumb{
             border-radius: 10px;
             background-image: -webkit-gradient(linear,
                                             left bottom,
@@ -35,11 +34,6 @@
                                             color-stop(0.44, rgb(122,153,217)),
                                             color-stop(0.72, rgb(73,125,189)),
                                             color-stop(0.86, rgb(28,58,148)));
-        }
-
-        .center{
-            margin: 0 auto 0 auto;
-            text-align: center;
         }
 
         .backsound{
@@ -59,22 +53,77 @@
             border: solid black 1px;
             color: cadetblue;
         }
+
+        .switch{
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+
+        .switch input{
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider{
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            -webkit-transition: .4s;
+            transition: .4s;
+        }
+
+        .slider:before{
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            -webkit-transition: .4s;
+            transition: .4s;
+        }
+
+        input:checked + .slider{
+            background-color: #2196F3;
+        }
+
+        input:focus + .slider{
+            box-shadow: 0 0 1px #2196F3;
+        }
+
+        input:checked + .slider:before{
+            -webkit-transform: translateX(30px);
+            -ms-transform: translateX(30px);
+            transform: translateX(30px);
+        }
+
+        .slider.round{
+            border-radius: 30px;
+        }
+
+        .slider.round:before{
+            border-radius: 50%;
+        }
+
+        .top-controls{
+            padding: 10px;
+        }
     </style>
-</head>
-<body>
-    <div class="header center">
-        <h1><i>Welcome to <span class="russian-flag">OUR</span> Project</i></h1>
-    </div>
-    <div class="backsound center">
-        <audio controls autoplay style="height:40px">
-            <source src="./resource/backsound.mp3" type="audio/mpeg">
-            Your browser does not support the audio element.
-        </audio>
-    </div>
-    <div class="stuff center" id="app"></div>
-    <div class="footer center">
-        <i>* Demo is above this text</i>
-    </div>
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script id="simulation-data">
+        const __windowConfig = Object.freeze(JSON.parse(`<%- window_config %>`));
+        const __objectConfig = Object.freeze(JSON.parse(`<%- physic_config %>`));
+    </script>
     <script type="x-shader/x-fragment" id="PCSS">
         #define LIGHT_WORLD_SIZE 0.005
         #define LIGHT_FRUSTUM_WIDTH 3.75
@@ -164,12 +213,52 @@
     <script type="x-shader/x-fragment" id="PCSSGetShadow">
         return PCSS( shadowMap, shadowCoord );
     </script>
-    <script>
-        const __windowConfig = Object.freeze(JSON.parse(`<%- window_config %>`));
-        const __objectConfig = Object.freeze(JSON.parse(`<%- physic_config %>`));
-    </script>
+</head>
+<body onload="window.StartSimulation(__windowConfig, __objectConfig)">
+    <div class="container-fluid d-flex justify-content-center py-4">
+        <h1><i>Welcome to <span class="russian-flag">OUR</span> Project</i></h1>
+    </div>
+    <div class="top-controls container-fluid d-flex py-4 flex-column">
+        <div class="backsound d-flex justify-content-center">
+            <audio controls autoplay loop title="Russia National Anthem">
+                <source src="./resource/backsound.mp3" type="audio/mpeg">
+                Your browser does not support the audio element.
+            </audio>
+        </div>
+        <div class="d-flex justify-content-center">
+            <div class="simulation-controls d-flex justify-content-center flex-column w-25">
+                <div class="row">
+                    <div class="col-md-6 d-flex justify-content-center">
+                        <label for="is-play">
+                            Play/Pause Simulation
+                        </label>
+                    </div>
+                    <div class="col-md-6 d-flex justify-content-center">
+                        <label for="restart-simulation">
+                            Restart Simulation
+                        </label>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 d-flex justify-content-center">
+                        <label class="switch">
+                            <input type="checkbox" id="is-play" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class="col-md-6 d-flex justify-content-center">
+                        <button type="button" class="btn btn-warning" id="restart-simulation" onclick="window.StartSimulation(__windowConfig, __objectConfig)">Restart Simulation</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="stuff center" id="app">
+    </div>
+    <div class="footer center">
+        <i>* Demo is above this text</i>
+    </div>
     <script type="text/javascript" src="./my-utils/environment.js"></script>
-    <script type="text/javascript" src="./my-utils/operator.js"></script>
     <script type="module" src="./main.js"></script>
 </body>
 </html>

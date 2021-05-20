@@ -1,7 +1,6 @@
 {
     "canvas-height" : 750,
-    "canvas-width" : 1000,
-    "fps" : 100,
+    "fps" : 200,
     "camera" : {
         "view-angle" : 75,
         "near-plane" : 0.1,

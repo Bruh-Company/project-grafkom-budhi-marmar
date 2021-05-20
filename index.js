@@ -4,7 +4,7 @@ const fs = require('fs');
 
 const publicDirectory = path.join(__dirname, 'public');
 const configDirectory = path.join(__dirname, 'config');
-const portNumber = 6969;
+const portNumber = 3000;
 const app = express();
 
 /**

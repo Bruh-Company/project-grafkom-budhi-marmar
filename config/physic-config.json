@@ -1,14 +1,12 @@
 {
     "environment" : {
-        "gravity" : 9.807
+        "gravity" : [0, -9.807, 0],
+        "air-fraction" : 0.2
     },
     "ball" : {
         "radius" : 0.5,
         "rho" : 6500,
         "color" : "rgb(255, 0, 255)"
-    },
-    "air" : {
-
     },
     "board" : {
         "side-length" : 25,

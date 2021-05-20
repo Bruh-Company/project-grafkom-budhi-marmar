@@ -3,32 +3,40 @@ import { BufferGeometryUtils } from '../three-module/bufferGeometryUtils.js';
 
 const color = __objectConfig["room"]["color"];
 
+const loader = new THREE.TextureLoader();
+const roomTexture = loader.load('./../resource/checkerboard_pattern.png');
+roomTexture.wrapS = roomTexture.wrapT = THREE.RepeatWrapping;
+roomTexture.repeat.set(3, 3);
+roomTexture.anisotropy = 16;
+roomTexture.encoding = THREE.sRGBEncoding;
+
 const geometry1 = new THREE.BoxGeometry(100, 100, 1);
 const geometry2 = new THREE.BoxGeometry(100, 100, 1);
 const geometry3 = new THREE.BoxGeometry(1, 100, 100);
 const geometry4 = new THREE.BoxGeometry(1, 100, 100);
-const geometry5 = new THREE.BoxGeometry(100, 1, 100);
+//const geometry5 = new THREE.BoxGeometry(100, 1, 100);
 const geometry6 = new THREE.BoxGeometry(100, 1, 100);
 
 geometry1.translate(0, 0, 50);
 geometry2.translate(0, 0, -50);
 geometry3.translate(50, 0, 0);
 geometry4.translate(-50, 0, 0);
-geometry5.translate(0, 50, 0);
+//geometry5.translate(0, 50, 0);
 geometry6.translate(0, -50, 0);
 
-const material = new THREE.MeshPhongMaterial({color: color});
+const material = new THREE.MeshPhongMaterial({map: roomTexture});
 
 const geometry = BufferGeometryUtils.mergeBufferGeometries([
     geometry1,
     geometry2,
     geometry3,
     geometry4,
-    geometry5,
+    //geometry5,
     geometry6
 ]);
 
 const object = new THREE.Mesh(geometry, material);
+object.receiveShadow = true;
 
 //object.receiveShadow = true;
 

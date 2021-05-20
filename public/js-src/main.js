@@ -1,3 +1,5 @@
+//#region include
+
 import * as THREE from './three-module/three.module.js';
 import Stats from './three-module/stats.module.js';
 import * as Ball from './my-model/ball.js';
@@ -5,38 +7,61 @@ import * as Board from './my-model/board.js';
 import * as Room from './my-model/room.js';
 import * as Lamp from './my-model/lamp.js';
 
-//const innerWidth = __windowConfig["canvas-width"];
-const innerWidth = document.getElementById('app').clientWidth;
-const innerHeight = __windowConfig["canvas-height"];
-const msPerFrame = 1000 / __windowConfig["fps"];
+//#endregion include
 
-const camViewAngle = __windowConfig["view-angle"];
-const camNearPlane = __windowConfig["near-plane"];
-const camFarPlane = __windowConfig["far-plane"];
+//#region variables
 
-const scene = new THREE.Scene();
-const directLight = new THREE.PointLight(0xffffff, 0.8, 100);
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
-const pointLightHelper = new THREE.PointLightHelper(directLight);
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-const camera = new THREE.PerspectiveCamera(
-    camViewAngle,
-    innerWidth / innerHeight,
-    camNearPlane,
-    camFarPlane
-);
+let innerWidth;
+let innerHeight;
+let msPerFrame;
+
+let camViewAngle;
+let camNearPlane;
+let camFarPlane;
+
+let scene;
+let directLight;
+let ambientLight;
+let pointLightHelper;
+let renderer;
+let raycaster;
+let camera;
 
 let stats;
-let cameraPosition = {
-    radius : __windowConfig["camera"]["initial-position"]["radius"],
-    hAngle : __windowConfig["camera"]["initial-position"]["h-angle"] * Math.PI / 180,
-    vAngle : __windowConfig["camera"]["initial-position"]["v-angle"] * Math.PI / 180
-};
-let isMouseDown = [false, false, false];
+let cameraPosition;
+let isMouseDown;
+let playSimulation;
 let initialMousePosition;
 let initialCameraPosition;
 let currentMousePosition;
-let raycaster;
+let boardInProgress;
+let intersectBoard;
+let circleSelection;
+let prevCoord;
+
+let idRequestAnimationFrame;
+let tickIntval;
+
+//#endregion variables
+
+//#region shader_setting
+
+let shader = THREE.ShaderChunk.shadowmap_pars_fragment;
+shader = shader.replace(
+    '#ifdef USE_SHADOWMAP',
+    '#ifdef USE_SHADOWMAP' +
+    document.getElementById( 'PCSS' ).textContent
+);
+shader = shader.replace(
+    '#if defined( SHADOWMAP_TYPE_PCF )',
+    document.getElementById( 'PCSSGetShadow' ).textContent +
+    '#if defined( SHADOWMAP_TYPE_PCF )'
+);
+THREE.ShaderChunk.shadowmap_pars_fragment = shader;
+
+//#endregion shader_setting
+
+//#region event_handler
 
 window.oncontextmenu = (e) => {
     e.preventDefault();
@@ -46,28 +71,65 @@ window.onmousedown = (e) => {
     if(e.which == 2) e.preventDefault();
 };
 
-document.body.onload = () => {
+const startSimul = (windowConfig, physicConfig) => {
+    console.clear();
+
+    //initialize variable
+    boardInProgress = false;
+    intersectBoard  = false;
+    prevCoord       = new THREE.Vector3();
+
+    innerWidth    = document.getElementById('app').clientWidth;
+    innerHeight   = windowConfig["canvas-height"];
+    msPerFrame    = 1000 / windowConfig["fps"];
+
+    camViewAngle  = windowConfig["view-angle"];
+    camNearPlane  = windowConfig["near-plane"];
+    camFarPlane   = windowConfig["far-plane"];
+
+    scene             = new THREE.Scene();
+    directLight       = new THREE.PointLight(0xffffff, 0.8, 100);
+    ambientLight      = new THREE.AmbientLight(0xffffff, 0.2);
+    pointLightHelper  = new THREE.PointLightHelper(directLight);
+    renderer          = new THREE.WebGLRenderer({ antialias: true });
+    raycaster         = new THREE.Raycaster();
+    camera            = new THREE.PerspectiveCamera(
+        camViewAngle,
+        innerWidth / innerHeight,
+        camNearPlane,
+        camFarPlane
+    );
+
+    cameraPosition = {
+        radius : windowConfig["camera"]["initial-position"]["radius"],
+        hAngle : windowConfig["camera"]["initial-position"]["h-angle"] * Math.PI / 180,
+        vAngle : windowConfig["camera"]["initial-position"]["v-angle"] * Math.PI / 180
+    };
+
+    isMouseDown     = [false, false, false];
+    playSimulation  = document.getElementById("is-play").checked;
+
+    //auto scroll
+    let target = document.getElementById("app");
+    let tmp = target.offsetTop;
+    setTimeout(function () {
+        window.scrollTo(0, tmp);
+    }, 500);
+
+    //initialize
+    Ball.initialize(physicConfig["ball"]);
+    Board.initialize(physicConfig["board"]);
+
+    //get info (for debug)
     Board.showInfo();
     Ball.showInfo();
     Room.showInfo();
 
-    let shader = THREE.ShaderChunk.shadowmap_pars_fragment;
-    shader = shader.replace(
-        '#ifdef USE_SHADOWMAP',
-        '#ifdef USE_SHADOWMAP' +
-        document.getElementById( 'PCSS' ).textContent
-    );
-    shader = shader.replace(
-        '#if defined( SHADOWMAP_TYPE_PCF )',
-        document.getElementById( 'PCSSGetShadow' ).textContent +
-        '#if defined( SHADOWMAP_TYPE_PCF )'
-    );
-    THREE.ShaderChunk.shadowmap_pars_fragment = shader;
-    
+    //initialize variables
     directLight.position.set(
-        __windowConfig["light"]["position"]["x"],
-        __windowConfig["light"]["position"]["y"],
-        __windowConfig["light"]["position"]["z"]
+        windowConfig["light"]["position"]["x"],
+        windowConfig["light"]["position"]["y"],
+        windowConfig["light"]["position"]["z"]
     );
     directLight.castShadow = true;
     directLight.shadow.camera.near = 0.1;
@@ -86,14 +148,11 @@ document.body.onload = () => {
     scene.add(Lamp.object);
     scene.add(camera);
     scene.background = new THREE.Color(0x222222);
-    
-    
+
     renderer.setSize(innerWidth, innerHeight);
     renderer.setPixelRatio(devicePixelRatio);
     renderer.shadowMap.enabled = true;
     renderer.outputEncoding = THREE.sRGBEncoding;
-
-    raycaster = new THREE.Raycaster();
 
     stats = new Stats();
 
@@ -105,79 +164,70 @@ document.body.onload = () => {
     dom.onmousedown = mouseDown;
     dom.onmouseup = mouseUp;
     dom.onmouseout = mouseUp;
-    document.getElementById("app").appendChild(dom);
+    dom.id = "3d-canvas";
 
-    document.getElementById("app").appendChild(stats.dom);
+    const parent = document.getElementById("app");
+    const elem = document.getElementById("3d-canvas");
+    if (elem !== null) parent.removeChild(elem);
+    parent.appendChild(dom);
+    parent.appendChild(stats.dom);
+
     stats.dom.style.position = 'absolute';
 
-    animate();
+    //stop all request before start new request
+    cancelAnimationFrame(idRequestAnimationFrame);
+    clearInterval(tickIntval);
 
-    setInterval(tick, msPerFrame);
+    animate();
+    tickIntval = setInterval(tick, msPerFrame);
 }
 
+window.StartSimulation = startSimul;
+
+//#endregion event_handler
+
 function animate() {
-    requestAnimationFrame(animate);
+    idRequestAnimationFrame = requestAnimationFrame(animate);
     renderer.render(scene, camera);
     stats.update();
 }
 
 function tick() {
+    playSimulation = document.getElementById("is-play").checked;
+
     camera.updateMatrixWorld();
 
     mouseHandler();
     
-    intersectCheck();
+    if (playSimulation){
+        intersectCheck();
 
-    Ball.tick();
-    Board.tick();
+        Ball.tick();
+        Board.tick();
+    }
 }
 
 function intersectCheck(){
-    const brd = Board.object.geometry;
-    const pos = brd.attributes.position.array;
-    const idx = brd.index.array;
-    const MxN = brd.index.count;
-
-    let arr = [];
-    let any = false;
-
-    for(let i = 0; i < MxN; i += 3){
-        let p = new THREE.Vector3(pos[idx[i] * 3], pos[idx[i] * 3 + 1], pos[idx[i] * 3 + 2]);
-        let q = new THREE.Vector3(pos[idx[i + 1] * 3], pos[idx[i + 1] * 3 + 1], pos[idx[i + 1] * 3 + 2]);
-        let r = new THREE.Vector3(pos[idx[i + 2] * 3], pos[idx[i + 2] * 3 + 1], pos[idx[i + 2] * 3 + 2]);
-        
-        const plane = new THREE.Plane().setFromCoplanarPoints(p, q, r);
-
-        let fly = Ball.inAir(plane);
-        any = any || !fly;
-        if(!fly) arr.push(plane.normal);
-        else arr.push(true);
-    }
-
-    if(any){
-        Ball.collision();
-    }
+    Ball.collision(Board);
 }
 
 function mouseHandler(){
     vCamPositioning();
     setCamPosition();
+    boardInProgress = Board.boardPositioning(!isMouseDown[0]);
 
     if(currentMousePosition == null) return;
     (() => {
         let t = 0;
-        if(isMouseDown.some(b => b)) t = Math.sqrt(Math.abs(initialMousePosition.y - currentMousePosition.y)) * Math.PI / 180;
+        if(isMouseDown.some(b => b)) t = (- 400 / (Math.abs(initialMousePosition.y - currentMousePosition.y) * 0.7 + 20) + 20) * Math.PI / 360;
 
         if(isMouseDown[0]){
-            raycaster.setFromCamera(new THREE.Vector2(
-                (initialMousePosition.x / window.innerWidth) * 2 - 1,
-                - (initialMousePosition.y / window.innerHeight) * 2 + 1), camera );
+            if(!playSimulation) return;
+            if(boardInProgress) return;
 
-            const intersect = raycaster.intersectObjects( [Board.object] );
-
-            if (intersect.length > 0){
-                //Board.object.material.emissive = 0xffffff;
-            }
+            //t = Math.pow(t * 180 / Math.PI, 0.75) * Math.PI / 180;
+            if(initialMousePosition.y < currentMousePosition.y) t *= -1;
+            Board.rotateBoard(t);
         }else if(isMouseDown[1]){
             //zoom
             t = 20 * t;
@@ -209,15 +259,47 @@ function mouseDown(event){
         let i = event.which - 1;
         if(isMouseDown.some(b => b)) return;
         if(!isMouseDown[i]){
-            isMouseDown[i] = true;
-            initialMousePosition = getMousePos(event);
-            initialCameraPosition = JSON.parse(JSON.stringify(cameraPosition));
+            if(i == 0 && !boardInProgress){
+                isMouseDown[i] = true;
+                initialMousePosition = getMousePos(event);
+                initialCameraPosition = JSON.parse(JSON.stringify(cameraPosition));
+
+                raycaster.setFromCamera(new THREE.Vector2(
+                    (initialMousePosition.x / window.innerWidth) * 2 - 1,
+                    - (initialMousePosition.y / window.innerHeight) * 2 + 1), camera );
+                    
+                const intersect = raycaster.intersectObjects( [Board.object] );
+                
+                if (intersect.length > 0){
+                    const point = intersect[0].point.add(Board.object.position);
+                    const vector = new THREE.Vector3().subVectors(point, Board.object.position);
+                    vector.applyQuaternion(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), - Math.PI / 2)).normalize();
+                    Board.setVectorRotation(vector);
+                }else{
+                    Board.setVectorRotation(new THREE.Vector3(0, 1, 0));
+                }
+            }else if(i > 0){
+                isMouseDown[i] = true;
+                initialMousePosition = getMousePos(event);
+                initialCameraPosition = JSON.parse(JSON.stringify(cameraPosition));
+            }
         }
     }
 }
 
 function mouseMove(event){
     currentMousePosition = getMousePos(event);
+
+    checkInnerMouse();
+}
+
+function checkInnerMouse(){
+    if (boardInProgress){
+        intersectBoard = false;
+        prevCoord = new THREE.Vector3();
+        scene.remove(circleSelection);
+        return;
+    }
 
     raycaster.setFromCamera(new THREE.Vector2(
         (currentMousePosition.x / window.innerWidth) * 2 - 1,
@@ -226,9 +308,24 @@ function mouseMove(event){
     const intersect = raycaster.intersectObjects( [Board.object] );
 
     if (intersect.length > 0){
-        Board.object.material.emissive.setHex(0xff0000);
+        if (!intersectBoard){
+            intersectBoard = true;
+            let geom = new THREE.CircleGeometry(1, 32);
+            let matter = new THREE.MeshPhongMaterial( {shininess: 40, color: 0xffff00, opacity: 0.3, transparent: true} );
+            geom.rotateX(- Math.PI / 2);
+            circleSelection = new THREE.Mesh(geom, matter);
+            circleSelection.receiveShadow = true;
+            scene.add(circleSelection);
+        }
+        //const translateOffset = new THREE.Vector3().subVectors(intersect[0].point, prevCoord);
+        //circleSelection.geometry.translate(translateOffset.x, translateOffset.y, translateOffset.z);
+        //prevCoord.copy(intersect[0].point);
+        if (!mouseDown[0]) circleSelection.position.copy(intersect[0].point.add(new THREE.Vector3(0, 0.001, 0)));
+        circleSelection.quaternion.copy(Board.getQuaternion());
     }else{
-        Board.object.material.emissive.setHex(0x000000);
+        intersectBoard = false;
+        prevCoord = new THREE.Vector3();
+        scene.remove(circleSelection);
     }
 }
 
@@ -250,6 +347,12 @@ function setCamPosition(){
         cameraPosition.radius * Math.sin(cameraPosition.vAngle),
         cameraPosition.radius * Math.cos(cameraPosition.vAngle) * Math.cos(cameraPosition.hAngle)
     );
+
+    // let a = new THREE.Vector3(cameraPosition.radius * Math.cos(-cameraPosition.vAngle) * Math.sin(cameraPosition.hAngle),
+    // cameraPosition.radius * Math.sin(-cameraPosition.vAngle),
+    // cameraPosition.radius * Math.cos(-cameraPosition.vAngle) * Math.cos(cameraPosition.hAngle)).add(camera.position);
+    // camera.lookAt(a.x, a.y, a.z);
+
     camera.lookAt(0, 0, 0);
 }
 

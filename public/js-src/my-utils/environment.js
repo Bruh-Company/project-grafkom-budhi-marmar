@@ -1,8 +1,12 @@
-const deltaComputation = 0.001;
+const deltaComputation = 0.000001;
 const deltaCollision = 0.01;
 const fps = __windowConfig["fps"];
 
 let env = {
-    gravity : __objectConfig["environment"]["gravity"] / (fps * fps)
+    gravity : {
+        x : __objectConfig["environment"]["gravity"][0] / (fps * fps),
+        y : __objectConfig["environment"]["gravity"][1] / (fps * fps),
+        z : __objectConfig["environment"]["gravity"][2] / (fps * fps)
+    },
+    air_fraction : __objectConfig["environment"]["air-fraction"]
 }
-
