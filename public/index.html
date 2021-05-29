@@ -218,45 +218,54 @@
     <div class="container-fluid d-flex justify-content-center py-4">
         <h1><i>Welcome to <span class="russian-flag">OUR</span> Project</i></h1>
     </div>
+    <div class="stuff center" id="app">
+    </div>
+    <div class="footer col-md-6">
+        <i>* Demo is above this text</i><br>
+        <div id="debug"></div>
+    </div>
     <div class="top-controls container-fluid d-flex py-4 flex-column">
         <div class="backsound d-flex justify-content-center">
             <audio controls autoplay loop title="Russia National Anthem">
-                <source src="./resource/backsound.mp3" type="audio/mpeg">
+                <!--<source src="./resource/backsound.mp3" type="audio/mpeg">-->
                 Your browser does not support the audio element.
             </audio>
         </div>
         <div class="d-flex justify-content-center">
-            <div class="simulation-controls d-flex justify-content-center flex-column w-25">
-                <div class="row">
-                    <div class="col-md-6 d-flex justify-content-center">
-                        <label for="is-play">
-                            Play/Pause Simulation
-                        </label>
+            <div class="simulation-controls d-flex justify-content-center w-50">
+                <div class="col-md-6 align-self-center">
+                    <div class="row justify-content-center">
+                        <div class="col-md-auto">
+                            <label for="is-play">
+                                Play/Pause Simulation
+                            </label>
+                        </div>
                     </div>
-                    <div class="col-md-6 d-flex justify-content-center">
-                        <label for="restart-simulation">
-                            Restart Simulation
-                        </label>
+                    <div class="row justify-content-center">
+                        <div class="col-md-auto">
+                            <label class="switch">
+                                <input type="checkbox" id="is-play" checked>
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
                     </div>
                 </div>
-                <div class="row">
-                    <div class="col-md-6 d-flex justify-content-center">
-                        <label class="switch">
-                            <input type="checkbox" id="is-play" checked>
-                            <span class="slider round"></span>
-                        </label>
+                <div class="col-md-6 align-self-center">
+                    <div class="row justify-content-center">
+                        <div class="col-md-auto">
+                            <label for="restart-simulation">
+                                Restart Simulation
+                            </label>
+                        </div>
                     </div>
-                    <div class="col-md-6 d-flex justify-content-center">
-                        <button type="button" class="btn btn-warning" id="restart-simulation" onclick="window.StartSimulation(__windowConfig, __objectConfig)">Restart Simulation</button>
+                    <div class="row justify-content-center">
+                        <div class="col-md-auto">
+                            <button type="button" class="btn btn-warning" id="restart-simulation" onclick="window.StartSimulation(__windowConfig, __objectConfig)">Restart Simulation</button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-    <div class="stuff center" id="app">
-    </div>
-    <div class="footer center">
-        <i>* Demo is above this text</i>
     </div>
     <script type="text/javascript" src="./my-utils/environment.js"></script>
     <script type="module" src="./main.js"></script>

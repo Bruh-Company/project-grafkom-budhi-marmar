@@ -38,6 +38,7 @@ let boardInProgress;
 let intersectBoard;
 let circleSelection;
 let prevCoord;
+let firstIntersectPoint;
 
 let idRequestAnimationFrame;
 let tickIntval;
@@ -75,9 +76,10 @@ const startSimul = (windowConfig, physicConfig) => {
     console.clear();
 
     //initialize variable
-    boardInProgress = false;
-    intersectBoard  = false;
-    prevCoord       = new THREE.Vector3();
+    boardInProgress     = false;
+    intersectBoard      = false;
+    prevCoord           = new THREE.Vector3();
+    firstIntersectPoint = new THREE.Vector3();
 
     innerWidth    = document.getElementById('app').clientWidth;
     innerHeight   = windowConfig["canvas-height"];
@@ -219,7 +221,8 @@ function mouseHandler(){
     if(currentMousePosition == null) return;
     (() => {
         let t = 0;
-        if(isMouseDown.some(b => b)) t = (- 400 / (Math.abs(initialMousePosition.y - currentMousePosition.y) * 0.7 + 20) + 20) * Math.PI / 360;
+        const a = 25;
+        if(isMouseDown.some(b => b)) t = (- a * a / (Math.abs(initialMousePosition.y - currentMousePosition.y) * 0.7 + a) + a) * Math.PI / 360;
 
         if(isMouseDown[0]){
             if(!playSimulation) return;
@@ -320,7 +323,19 @@ function checkInnerMouse(){
         //const translateOffset = new THREE.Vector3().subVectors(intersect[0].point, prevCoord);
         //circleSelection.geometry.translate(translateOffset.x, translateOffset.y, translateOffset.z);
         //prevCoord.copy(intersect[0].point);
-        if (!mouseDown[0]) circleSelection.position.copy(intersect[0].point.add(new THREE.Vector3(0, 0.001, 0)));
+        let basePoint;
+        if(!isMouseDown[0]){
+            basePoint = intersect[0].point;
+            firstIntersectPoint = new THREE.Vector3().copy(basePoint);
+        }
+        else basePoint = new THREE.Vector3().copy(firstIntersectPoint);
+        basePoint.applyQuaternion(Board.getQuaternion());
+        circleSelection.position.copy(basePoint.add(new THREE.Vector3(0, 0.1, 0)));
+        circleSelection.quaternion.copy(Board.getQuaternion());
+    }else if (isMouseDown[0] && intersectBoard){
+        const basePoint = new THREE.Vector3().copy(firstIntersectPoint);
+        basePoint.applyQuaternion(Board.getQuaternion());
+        circleSelection.position.copy(basePoint.add(new THREE.Vector3(0, 0.1, 0)));
         circleSelection.quaternion.copy(Board.getQuaternion());
     }else{
         intersectBoard = false;

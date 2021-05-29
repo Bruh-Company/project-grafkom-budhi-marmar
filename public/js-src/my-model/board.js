@@ -11,6 +11,7 @@ let object;
 
 let physic;
 
+
 const initialize = (objectConfig) => {
     sideLength = objectConfig["side-length"];
     sideThickness = objectConfig["thickness"]
@@ -30,7 +31,7 @@ const initialize = (objectConfig) => {
         mass : boardRho * sideLength * sideLength * sideThickness,
         angle : 0,
         angle_velocity : 0,
-        vector_rotation : new THREE.Vector3(1, 0, 0)
+        vector_rotation : new THREE.Vector3(0, 1, 0)
     }
 
     //tester
@@ -91,6 +92,10 @@ const boardPositioning = (e) => {
         rotateBoard(physic.angle * 9 / 10);
         return true;
     }
+}
+
+const randomMaze = () => {
+
 }
 
 export { object, initialize, showInfo, tick, getQuaternion, rotateBoard, getMomentumAt, setVectorRotation, invertVectorRotation, boardPositioning };
