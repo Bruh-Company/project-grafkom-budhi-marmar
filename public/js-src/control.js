@@ -1,15 +1,9 @@
-// window.onload(){
-//     rangeSlide(getElementById('sliderGravity').value,'rangeGravity');
-//     rangeSlide(getElementById('sliderBallSize').value,'rangeBallSize');
-//     rangeSlide(getElementById('sliderBallWeight').value,'rangeBallWeight');
-// }
+function init(){
+    rangeSlide(document.getElementById('sliderGravityControl').value,'rangeGravity');
+    rangeSlide(document.getElementById('sliderBallSize').value,'rangeBallSize');
+    rangeSlide(document.getElementById('sliderBallWeight').value,'rangeBallWeight');
+}
 
-// window.onload = function(){
-
-//     rangeSlide(getElementById('sliderGravity').value,'rangeGravity');
-//     rangeSlide(getElementById('sliderBallSize').value,'rangeBallSize');
-//     rangeSlide(getElementById('sliderBallWeight').value,'rangeBallWeight');
-// };
 
 function rangeSlide(value,id) {
     // alert(value);
@@ -32,5 +26,5 @@ function ballSize(e) {
     // let __objectConfig = Object.freeze(JSON.parse(`<%- physic_config %>`));
 }
 function ballWeight(e) {  
-
+    __objectConfig["ball"]["rho"] = e.value;
 }
