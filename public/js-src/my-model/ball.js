@@ -79,6 +79,7 @@ const tick = () => {
 
     physic.velocity.multiplyScalar(exp);
     physic.velocity.add(new THREE.Vector3().copy(physic.acceleration).multiplyScalar((exp - 1) / (cst * fps * fps)));
+    if (Math.abs(physic.velocity.length()) < 0.0001) physic.velocity = new THREE.Vector3();
 
     //Rotation
     
@@ -165,30 +166,17 @@ const collision = (obj) => {
             resultant.copy(sinRes);
             physic.vector_rotation = new THREE.Vector3().crossVectors(sinRes, reflectVector).normalize();
             physic.angle_velocity = sinRes.length() / ballRadius;
-            //physic.velocity.copy(resultant);
         }else{
-            const temp = new THREE.Vector3().crossVectors(reflectVector, physic.vector_rotation).normalize().negate();
-            if (Math.abs(temp.x - physic.vector_rotation.x) < 0.0001
-            && Math.abs(temp.y - physic.vector_rotation.y) < 0.0001
-            && Math.abs(temp.z - physic.vector_rotation.z) < 0.0001){
-                physic.angle_velocity -= sin.length() / ballRadius;
-            }else{
-                physic.vector_rotation = new THREE.Vector3().crossVectors(sin, reflectVector).normalize();
-                physic.angle_velocity = sin.length() / ballRadius;
-            }
+            const temp = new THREE.Vector3().crossVectors(reflectVector, physic.vector_rotation).setLength(physic.angle_velocity * ballRadius);
+            sin.add(temp).divideScalar(2);
+            
+            physic.vector_rotation = new THREE.Vector3().crossVectors(sin, reflectVector).normalize();
+            physic.angle_velocity = sin.length() / ballRadius;
             physic.velocity.copy(resultant);
     
             resultant.multiplyScalar(bendPart);
             nextPosition.add(resultant);
         }
-
-        // sin.multiplyScalar(0.1);
-        // const prev_vel = physic.angle_velocity * ballRadius;
-        // const prev_vec = new THREE.Vector3().crossVectors(physic.vector_rotation, cos).setLength(prev_vel);
-        // sin.add(prev_vec);
-        // physic.vector_rotation = new THREE.Vector3().crossVectors(cos, sin).normalize();
-        // const rot_fraction = sin.length();
-        // physic.angle_velocity = rot_fraction / ballRadius;
     }
 
     //     let closestDistance = Infinity;
