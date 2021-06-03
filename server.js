@@ -10,14 +10,14 @@ const app = express();
 /**
  * live reload (bwt pas developing) ===================================
  */
-const livereload = require('livereload');
-const connectLivereload = require('connect-livereload');
+//const livereload = require('livereload');
+//const connectLivereload = require('connect-livereload');
 
-const liveReloadServer = livereload.createServer();
-liveReloadServer.watch(publicDirectory);
-liveReloadServer.watch(configDirectory);
+// const liveReloadServer = livereload.createServer();
+// liveReloadServer.watch(publicDirectory);
+// liveReloadServer.watch(configDirectory);
 
-app.use(connectLivereload());
+// app.use(connectLivereload());
 /**
  * ====================================================================
  */
