@@ -24,4 +24,23 @@ const sum = (a) => {
     }
 }
 
-export { trigono, abs, sum };
+const setAsyncInterval = (func, wait, times) => {
+    let interv = function(w, t){
+        return function(){
+            if(typeof t === "undefined" || t-- > 0){
+                setTimeout(interv, w);
+                try{
+                    func.call(null);
+                }
+                catch(e){
+                    t = 0;
+                    throw e.toString();
+                }
+            }
+        };
+    }(wait, times);
+    if (interv) setTimeout(interv, wait);
+    return { clear : () => { interv = null }};
+};
+
+export { trigono, abs, sum, setAsyncInterval };

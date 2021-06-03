@@ -14,6 +14,8 @@
             max-width: 100vw;
             overflow-x: hidden;
             scroll-behavior: smooth;
+            background-color: #181818;
+            color: white;
         }
 
         ::-webkit-scrollbar-track{
@@ -37,12 +39,19 @@
                                             color-stop(0.86, rgb(28,58,148)));
         }
 
+        .hide-scroll::-webkit-scrollbar {
+            width: 0;
+            background: transparent;
+        }
+
         .backsound{
             padding: 20px;
         }
 
         #app{
             position: relative;
+            height: 100vh;
+            width: 100vw;
         }
 
         canvas{
@@ -131,8 +140,8 @@
         #define LIGHT_SIZE_UV (LIGHT_WORLD_SIZE / LIGHT_FRUSTUM_WIDTH)
         #define NEAR_PLANE 9.5
 
-        #define NUM_SAMPLES 17
-        #define NUM_RINGS 11
+        #define NUM_SAMPLES 40
+        #define NUM_RINGS 20
         #define BLOCKER_SEARCH_NUM_SAMPLES NUM_SAMPLES
         #define PCF_NUM_SAMPLES NUM_SAMPLES
 
@@ -217,8 +226,16 @@
 </head>
 <body onload="window.StartSimulation(__windowConfig, __objectConfig)">
     <div class="container-fluid d-flex justify-content-center py-4">
-        <h1><i>Welcome to <span class="russian-flag">OUR</span> Project</i></h1>
+        <h1><i>Computer Graphic's Project</i></h1>
     </div>
+    <!-- <div class="top-controls container-fluid d-flex py-4 flex-column">
+        <div class="backsound d-flex justify-content-center">
+            <audio controls autoplay loop title="Russia National Anthem">
+                <source src="./resource/backsound.mp3" type="audio/mpeg">
+                Your browser does not support the audio element.
+            </audio>
+        </div>
+    </div> -->
     <div class="stuff center" id="app">
     </div>
     <div class="footer col-md-6">
@@ -226,12 +243,6 @@
         <div id="debug"></div>
     </div>
     <div class="top-controls container-fluid d-flex py-4 flex-column">
-        <div class="backsound d-flex justify-content-center">
-            <audio controls autoplay loop title="Russia National Anthem">
-                <!--<source src="./resource/backsound.mp3" type="audio/mpeg">-->
-                Your browser does not support the audio element.
-            </audio>
-        </div>
         <div class="d-flex justify-content-center">
             <div class="simulation-controls d-flex justify-content-center w-50">
                 <div class="col-md-6 align-self-center">
@@ -254,49 +265,104 @@
                 <div class="col-md-6 align-self-center">
                     <div class="row justify-content-center">
                         <div class="col-md-auto">
-                            <label for="restart-simulation">
-                                Restart Simulation
-                            </label>
+                            <button type="button" class="btn btn-outline-primary" id="restart-simulation" onclick="window.StartSimulation(__windowConfig, __objectConfig)">Restart Simulation</button>
                         </div>
                     </div>
+                </div>
+                <div class="col-md-6 align-self-center">
                     <div class="row justify-content-center">
                         <div class="col-md-auto">
-                            <button type="button" class="btn btn-warning" id="restart-simulation" onclick="window.StartSimulation(__windowConfig, __objectConfig)">Restart Simulation</button>
+                            <button type="button" class="btn btn-outline-primary" id="set-simulation" data-toggle="modal" data-target="#settingsModal">Settings</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 align-self-center">
+                    <div class="row justify-content-center">
+                        <div class="col-md-auto">
+                            <button type="button" class="btn btn-outline-primary" id="credits-simulation" data-toggle="modal" data-target="#creditsModal">Credits</button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="bottom-container align-self-center h-50 d-flex px-2">
-        <div class="w-75 align-content-center ">
-            <!-- Control -->
-                <div class="d-flex justify-content-left">
-                    <div class="w-25 d-flex justify-content-center flex-column align-items-center mx-3 mb-3">
-                        <h2 class="text-dark w-100">Gravity Control</h2>
-                        <span class="rangeValue" id="rangeGravity">0</span>
-                        <Input class="range w-100" type="range" id="sliderGravityControl" value="-9.807" min="-10" max="10" step="0.01" onChange="rangeSlide(this.value,'rangeGravity')" onload="rangeSlide(this.value,'rangeGravity')" oninput="gravity(this)" onmousemove="rangeSlide(this.value,'rangeGravity')"></Input>
-                    </div>
-                    <div class="w-25 d-flex justify-content-center flex-column align-items-center mx-3 mb-3">
-                        <h2 class="text-dark w-100">Ball Size</h2>
-                        <span class="rangeValue" id="rangeBallSize">0</span>
-                        <Input class="range w-100" type="range" id="sliderBallSize" value="0.5" min="0" max="10" step="0.5" onChange="rangeSlide(this.value,'rangeBallSize')" onload="rangeSlide(this.value,'rangeBallSize')" oninput="ballSize(this)" onmousemove="rangeSlide(this.value,'rangeBallSize')"></Input>
-                    </div>
-                    <div class="w-25 d-flex justify-content-center flex-column align-items-center mx-3 mb-3">
-                        <h2 class="text-dark w-100">Ball Weight</h2>
-                        <span class="rangeValue" id="rangeBallWeight">0</span>
-                        <Input class="range w-100" type="range" id="sliderBallWeight" value="6500" min="0" max="10000" step="500" onChange="rangeSlide(this.value,'rangeBallWeight')" onload="rangeSlide(this.value,'rangeBallWeight')" oninput="ballWeight(this)" onmousemove="rangeSlide(this.value,'rangeBallWeight')"></Input>
-                    </div>
-                </div>
-        </div>
-        <div class="w-25">
-            <!-- Credit -->
-            <h1>gege</h1>
-        </div>
-
-    </div>
     <script type="text/javascript" src="./my-utils/environment.js"></script>
+    <script type="text/javascript" src="./control.js"></script>
     <script type="module" src="./main.js"></script>
-    <script src="./control.js"></script>
+
+    <!-- Modal -->
+    <div class="modal fade" id="settingsModal" tabindex="-1" role="dialog" aria-labelledby="settingsModalLabel" aria-hidden="true" style="color: black">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="settingsModalLabel">Settings</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#settingsModal">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade hide-scroll" id="creditsModal" tabindex="-1" role="dialog" aria-labelledby="creditsModalLabel" aria-hidden="true" style="color: black">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="creditsModalLabel">Credits</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <h6>Creators</h6>
+                    <ul>
+                        <li>Christian Budhi Sabdana<br>
+                            <sup><i>219116781</i></sup>
+                        </li>
+                        <li>Maria Andreas Iskandar<br>
+                            <sup><i>219116793</i></sup>
+                        </li>
+                    </ul>
+                    <h6>Physic Resources & Contributors</h6>
+                    <ul>
+                        <li>Novan Rajuli Majid Almahi<br>
+                            <sup><i>Physic Teacher and Founder of Area Eksak</i></sup>
+                        </li>
+                        <li>Nathanael Agung Surya Putra<br>
+                            <sup><i>Undergraduate of Physic Education at Satya Wacana Christian University</i></sup>
+                        </li>
+                        <li>MIT OpenCourseWare<br>
+                            <sup><i>Classical Mechanics, Fall 2016</i></sup>
+                        </li>
+                    </ul>
+                    <h6>Modules</h6>
+                    <ul>
+                        <li>THREE<br>
+                            <sup><i>Main graphics engine</i></sup>
+                        </li>
+                        <li>Bootstrap 4<br>
+                            <sup><i>Interface</i></sup>
+                        </li>
+                        <li>Jquery<br>
+                            <sup><i>Required for Bootstrap 4</i></sup>
+                        </li>
+                        <li>Popper<br>
+                            <sup><i>Required for Bootstrap 4</i></sup>
+                        </li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

@@ -6,10 +6,13 @@ import * as Ball from './my-model/ball.js';
 import * as Board from './my-model/board.js';
 import * as Room from './my-model/room.js';
 import * as Lamp from './my-model/lamp.js';
+import * as OP from './my-utils/operator.js';
 
 //#endregion include
 
 //#region variables
+
+const container = document.getElementById('app');
 
 let innerWidth;
 let innerHeight;
@@ -26,6 +29,7 @@ let pointLightHelper;
 let renderer;
 let raycaster;
 let camera;
+let composer;
 
 let stats;
 let cameraPosition;
@@ -39,6 +43,7 @@ let intersectBoard;
 let circleSelection;
 let prevCoord;
 let firstIntersectPoint;
+let firstIntersect;
 
 let idRequestAnimationFrame;
 let tickIntval;
@@ -81,8 +86,8 @@ const startSimul = (windowConfig, physicConfig) => {
     prevCoord           = new THREE.Vector3();
     firstIntersectPoint = new THREE.Vector3();
 
-    innerWidth    = document.getElementById('app').clientWidth;
-    innerHeight   = windowConfig["canvas-height"];
+    innerWidth    = container.clientWidth;
+    innerHeight   = container.clientHeight;
     msPerFrame    = 1000 / windowConfig["fps"];
 
     camViewAngle  = windowConfig["view-angle"];
@@ -112,11 +117,8 @@ const startSimul = (windowConfig, physicConfig) => {
     playSimulation  = document.getElementById("is-play").checked;
 
     //auto scroll
-    let target = document.getElementById("app");
-    let tmp = target.offsetTop;
-    setTimeout(function () {
-        window.scrollTo(0, tmp);
-    }, 500);
+    let tmp = container.offsetTop;
+    window.scrollTo(0, tmp);
 
     //initialize
     Ball.initialize(physicConfig["ball"]);
@@ -168,20 +170,42 @@ const startSimul = (windowConfig, physicConfig) => {
     dom.onmouseout = mouseUp;
     dom.id = "3d-canvas";
 
-    const parent = document.getElementById("app");
     const elem = document.getElementById("3d-canvas");
-    if (elem !== null) parent.removeChild(elem);
-    parent.appendChild(dom);
-    parent.appendChild(stats.dom);
+    if (elem !== null) container.removeChild(elem);
+    container.appendChild(dom);
+    container.appendChild(stats.dom);
 
     stats.dom.style.position = 'absolute';
 
     //stop all request before start new request
     cancelAnimationFrame(idRequestAnimationFrame);
-    clearInterval(tickIntval);
-
+    if (tickIntval) tickIntval.clear();
+    
     animate();
-    tickIntval = setInterval(tick, msPerFrame);
+    tickIntval = OP.setAsyncInterval(tick, msPerFrame);
+}
+
+let funres;
+window.onresize = () => {
+    clearTimeout(funres);
+    funres = setTimeout(() => {
+        container.style.width   = '100vw';
+        container.style.height  = '100vh';
+
+        innerWidth    = container.clientWidth;
+        innerHeight   = container.clientHeight;
+
+        renderer.setSize(innerWidth, innerHeight);
+        camera        = new THREE.PerspectiveCamera(
+            camViewAngle,
+            innerWidth / innerHeight,
+            camNearPlane,
+            camFarPlane
+        );
+
+        const tmp = container.offsetTop;
+        window.scrollTo(0, tmp);
+    }, 300);
 }
 
 window.StartSimulation = startSimul;
@@ -313,11 +337,7 @@ function checkInnerMouse(){
     if (intersect.length > 0){
         if (!intersectBoard){
             intersectBoard = true;
-            let geom = new THREE.CircleGeometry(1, 32);
-            let matter = new THREE.MeshPhongMaterial( {shininess: 40, color: 0xffff00, opacity: 0.3, transparent: true} );
-            geom.rotateX(- Math.PI / 2);
-            circleSelection = new THREE.Mesh(geom, matter);
-            circleSelection.receiveShadow = true;
+            circleSelection = new THREE.PointLight( 0x00ffff, 1, 2);
             scene.add(circleSelection);
         }
         //const translateOffset = new THREE.Vector3().subVectors(intersect[0].point, prevCoord);
@@ -327,20 +347,29 @@ function checkInnerMouse(){
         if(!isMouseDown[0]){
             basePoint = intersect[0].point;
             firstIntersectPoint = new THREE.Vector3().copy(basePoint);
+            firstIntersect = JSON.parse(JSON.stringify(intersect));
+            basePoint.applyQuaternion(Board.getQuaternion());
+            circleSelection.position.copy(basePoint.add(intersect[0].face.normal));
+            document.body.style.cursor = 'grab';
         }
-        else basePoint = new THREE.Vector3().copy(firstIntersectPoint);
-        basePoint.applyQuaternion(Board.getQuaternion());
-        circleSelection.position.copy(basePoint.add(new THREE.Vector3(0, 0.1, 0)));
+        else{
+            basePoint = new THREE.Vector3().copy(firstIntersectPoint);
+            basePoint.applyQuaternion(Board.getQuaternion());
+            circleSelection.position.copy(basePoint.add(firstIntersect[0].face.normal));
+            document.body.style.cursor = 'grabbing';
+        }
         circleSelection.quaternion.copy(Board.getQuaternion());
-    }else if (isMouseDown[0] && intersectBoard){
+    }else if (isMouseDown[0]){
         const basePoint = new THREE.Vector3().copy(firstIntersectPoint);
         basePoint.applyQuaternion(Board.getQuaternion());
-        circleSelection.position.copy(basePoint.add(new THREE.Vector3(0, 0.1, 0)));
+        circleSelection.position.copy(basePoint.add(firstIntersect[0].face.normal));
         circleSelection.quaternion.copy(Board.getQuaternion());
+        document.body.style.cursor = 'grabbing';
     }else{
         intersectBoard = false;
         prevCoord = new THREE.Vector3();
         scene.remove(circleSelection);
+        document.body.style.cursor = 'default';
     }
 }
 

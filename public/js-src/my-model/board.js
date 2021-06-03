@@ -10,11 +10,11 @@ let mesh;
 let object;
 
 let physic;
-
+let maze;
 
 const initialize = (objectConfig) => {
     sideLength = objectConfig["side-length"];
-    sideThickness = objectConfig["thickness"]
+    sideThickness = objectConfig["thickness"];
     boardColor = objectConfig["color"];
     boardRho = objectConfig["rho"];
 
