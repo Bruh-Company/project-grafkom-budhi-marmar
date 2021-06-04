@@ -185,29 +185,29 @@ const startSimul = (windowConfig, physicConfig, cb) => {
     
     animate();
     tickIntval = OP.setAsyncInterval(tick, msPerFrame);
-}
 
-let funres;
-window.onresize = () => {
-    clearTimeout(funres);
-    funres = setTimeout(() => {
-        container.style.width   = '100vw';
-        container.style.height  = '100vh';
+    let funres;
+    window.onresize = () => {
+        clearTimeout(funres);
+        funres = setTimeout(() => {
+            container.style.width   = '100vw';
+            container.style.height  = '100vh';
 
-        innerWidth    = container.clientWidth;
-        innerHeight   = container.clientHeight;
+            innerWidth    = container.clientWidth;
+            innerHeight   = container.clientHeight;
 
-        renderer.setSize(innerWidth, innerHeight);
-        camera        = new THREE.PerspectiveCamera(
-            camViewAngle,
-            innerWidth / innerHeight,
-            camNearPlane,
-            camFarPlane
-        );
+            renderer.setSize(innerWidth, innerHeight);
+            camera        = new THREE.PerspectiveCamera(
+                camViewAngle,
+                innerWidth / innerHeight,
+                camNearPlane,
+                camFarPlane
+            );
 
-        const tmp = container.offsetTop;
-        window.scrollTo(0, tmp);
-    }, 300);
+            const tmp = container.offsetTop;
+            window.scrollTo(0, tmp);
+        }, 300);
+    }
 }
 
 window.StartSimulation = startSimul;

@@ -8,7 +8,7 @@ let loader;
 let ballTexture;
 
 let geometry;
-let mesh;
+let material;
 let object;
 
 let nextPosition = new THREE.Vector3(0, 10, 0);
@@ -36,8 +36,8 @@ const initialize = (objectConfig) => {
     ballTexture.encoding = THREE.sRGBEncoding;
 
     geometry = new THREE.SphereGeometry(ballRadius, 32, 32);
-    mesh = new THREE.MeshPhongMaterial( {shininess: 40, map: ballTexture} );
-    object = new THREE.Mesh(geometry, mesh);
+    material = new THREE.MeshPhongMaterial( {shininess: 40, map: ballTexture} );
+    object = new THREE.Mesh(geometry, material);
 
     nextPosition = new THREE.Vector3(0, 10, 0);
 
@@ -59,10 +59,6 @@ const initialize = (objectConfig) => {
 }
 
 const showInfo = () => {
-
-}
-
-const acceleration_analysis = () => {
 
 }
 

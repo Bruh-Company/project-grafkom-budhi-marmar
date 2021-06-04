@@ -5,12 +5,16 @@
     },
     "ball" : {
         "radius" : 0.5,
-        "rho" : 6500
+        "rho" : 6500,
+        "color" : "rgb(255, 0, 255)"
     },
     "board" : {
         "side-length" : 25,
         "thickness" : 0.2,
         "rho" : 700,
         "color" : "rgb(150, 10, 200)"
+    },
+    "room" : {
+        "color" : "rgb(150, 10, 150)"
     }
 }
