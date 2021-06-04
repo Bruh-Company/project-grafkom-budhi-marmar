@@ -7,8 +7,6 @@ const configDirectory = path.join(__dirname, 'config');
 const portNumber = process.env.PORT || 3000;
 const app = express();
 
-process.env.NODE_ENV = 'production';
-
 /**
  * live reload (bwt pas developing) ===================================
  */

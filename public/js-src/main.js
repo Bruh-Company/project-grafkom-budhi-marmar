@@ -77,8 +77,9 @@ window.onmousedown = (e) => {
     if(e.which == 2) e.preventDefault();
 };
 
-const startSimul = (windowConfig, physicConfig) => {
+const startSimul = (windowConfig, physicConfig, cb) => {
     init();
+    if (cb) cb();
     console.clear();
 
     //initialize variable

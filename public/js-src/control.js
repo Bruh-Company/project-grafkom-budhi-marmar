@@ -30,7 +30,7 @@ function saveVar(){
 
 function saveChanges(){
 
-    __objectConfig["environment"]["gravity"][1] = document.getElementById("sliderGravityControl").value;
-    __objectConfig["ball"]["radius"] = document.getElementById("sliderBallSize").value;
-    __objectConfig["ball"]["rho"] = document.getElementById("sliderBallWeight").value;
+    __objectConfig["environment"]["gravity"][1] = parseFloat(document.getElementById("sliderGravityControl").value);
+    __objectConfig["ball"]["radius"] = parseFloat(document.getElementById("sliderBallSize").value);
+    __objectConfig["ball"]["rho"] = parseFloat(document.getElementById("sliderBallWeight").value);
 }

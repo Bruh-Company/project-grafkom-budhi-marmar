@@ -13,15 +13,15 @@ let object;
 
 let nextPosition = new THREE.Vector3(0, 10, 0);
 let physic = {
-    volume          : 4 * Math.PI * Math.pow(ballRadius, 3) / 3,
-    mass            : ballRho * 4 * Math.PI * Math.pow(ballRadius, 3) / 3,
+    volume          : 0,
+    mass            : 0,
     acceleration    : new THREE.Vector3(),
     velocity        : new THREE.Vector3(),
-    shape_constant  : (2 / 5) /** bola pejal*/,
-    mom_of_inertia  : (2 / 5) /** bola pejal */ * ballRho * 4 * Math.PI * Math.pow(ballRadius, 5) / 3,
-    moi_per_r_sq    : (2 / 5) /** bola pejal */ * ballRho * 4 * Math.PI * Math.pow(ballRadius, 3) / 3,
+    shape_constant  : 0,
+    mom_of_inertia  : 0,
+    moi_per_r_sq    : 0,
     angle_velocity  : 0,
-    vector_rotation : new THREE.Vector3(0, 1, 0) //vector keluar dari jam, angle positive bakal muter berlawanan jarum jam
+    vector_rotation : new THREE.Vector3(0, 1, 0)
 }
 
 const initialize = (objectConfig) => {
