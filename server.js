@@ -7,24 +7,27 @@ const configDirectory = path.join(__dirname, 'config');
 const portNumber = process.env.PORT || 3000;
 const app = express();
 
+process.env.NODE_ENV = 'production';
+
 /**
  * live reload (bwt pas developing) ===================================
  */
-const livereload = require('livereload');
-const connectLivereload = require('connect-livereload');
+// const livereload = require('livereload');
+// const connectLivereload = require('connect-livereload');
 
-const liveReloadServer = livereload.createServer();
-liveReloadServer.watch(publicDirectory);
-liveReloadServer.watch(configDirectory);
+// const liveReloadServer = livereload.createServer();
+// liveReloadServer.watch(publicDirectory);
+// liveReloadServer.watch(configDirectory);
+// liveReloadServer.off();
 
-app.use(connectLivereload());
+// app.use(connectLivereload());
 /**
  * ====================================================================
  */
 
 app.listen(portNumber, () => {
     console.log(`server started on port: ${portNumber}`);
-    console.log(`open our project on \x1b[31m\x1b[47m\x1b[1mhttp://localhost:${portNumber}/\x1b[0m\n`);
+    console.log(`open our project on \x1b[31m\x1b[47m\x1b[1mhttp://localhost:${portNumber}/computer-graphics\x1b[0m\n`);
 });
 
 
@@ -35,7 +38,7 @@ app.get('/computer-graphics', (req, res) => {
     app.engine('html', require('ejs').renderFile);
     
     app.use(express.static('public/js-src'));
-    
+
     const current = new Date();
     const now = `${current.getHours().toString().padStart(2,'0')}:${current.getMinutes().toString().padStart(2,'0')}:${current.getSeconds().toString().padStart(2,'0')}`;
     console.log(`\x1b[31m${now} \x1b[32mreload-log\x1b[31m \u25b6\x1b[0m catch request to simulation with default constant`);
