@@ -6,25 +6,31 @@ function init(){
 
 
 function rangeSlide(value,id) {
-    // alert(value);
     document.getElementById(id).innerHTML = value;
 }
-function gravity(e) { 
-    // alert("Jalan");
-    // alert(e.value);
-    __objectConfig["environment"]["gravity"][1] = e.value;
-    // console.log(__objectConfig["environment"]["gravity"]);
-    // __objectConfig["ball"]["radius"] = e.value;
-    // let __objectConfig = Object.freeze(JSON.parse(`<%- physic_config %>`));
-}
-function ballSize(e) { 
-    // alert("Jalan");
-    // alert(e.value);
+function gravity(e) {
     // __objectConfig["environment"]["gravity"][1] = e.value;
-    // console.log(__objectConfig["environment"]["gravity"]);
-    __objectConfig["ball"]["radius"] = e.value;
-    // let __objectConfig = Object.freeze(JSON.parse(`<%- physic_config %>`));
+}
+function ballSize(e) {
+    // __objectConfig["ball"]["radius"] = e.value;
 }
 function ballWeight(e) {  
-    __objectConfig["ball"]["rho"] = e.value;
+    // __objectConfig["ball"]["rho"] = e.value;
+}
+
+function saveVar(){
+    document.getElementById("sliderGravityControl").value = __objectConfig["environment"]["gravity"][1];
+    document.getElementById("sliderBallSize").value = __objectConfig["ball"]["radius"];
+    document.getElementById("sliderBallWeight").value = __objectConfig["ball"]["rho"];
+    init();
+    document.getElementById("gravityBefore").value  = document.getElementById("sliderGravityControl").value;
+    document.getElementById("sizeBefore").value     = document.getElementById("sliderBallSize").value;
+    document.getElementById("weightBefore").value   = document.getElementById("sliderBallWeight").value;
+}
+
+function saveChanges(){
+
+    __objectConfig["environment"]["gravity"][1] = document.getElementById("sliderGravityControl").value;
+    __objectConfig["ball"]["radius"] = document.getElementById("sliderBallSize").value;
+    __objectConfig["ball"]["rho"] = document.getElementById("sliderBallWeight").value;
 }

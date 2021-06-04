@@ -78,6 +78,7 @@ window.onmousedown = (e) => {
 };
 
 const startSimul = (windowConfig, physicConfig) => {
+    init();
     console.clear();
 
     //initialize variable
