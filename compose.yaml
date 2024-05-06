@@ -1,6 +1,6 @@
 services:
   web:
-    container_name: 'jobs-backend'
+    container_name: 'boodie-smangka'
     build: .
     ports:
       - "3100:3000"
