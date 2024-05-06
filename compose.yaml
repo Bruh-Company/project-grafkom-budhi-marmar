@@ -3,7 +3,7 @@ services:
     container_name: 'boodie-smangka'
     build: .
     ports:
-      - "3100:3000"
+      - "3100:3100"
       # - "5000:4000"
   # redis:
   #   image: "redis:alpine"

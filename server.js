@@ -4,7 +4,7 @@ const fs = require('fs');
 
 const publicDirectory = path.join(__dirname, 'public');
 const configDirectory = path.join(__dirname, 'config');
-const portNumber = process.env.PORT || 3000;
+const portNumber = process.env.PORT || 3100;
 const app = express();
 
 /**
