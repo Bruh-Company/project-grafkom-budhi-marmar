@@ -8,7 +8,7 @@ WORKDIR /app
 # where available (npm@5+)
 COPY package*.json ./
 
-RUN apt-get update || : && apt-get install python3 -y
+RUN apt-get update || : && apt-get install python3 xserver-xorg-dev libxi-dev libxext-dev -y
 
 RUN npm install
 # If you are building your code for production
