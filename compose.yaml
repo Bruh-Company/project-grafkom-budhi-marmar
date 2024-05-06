@@ -1,0 +1,9 @@
+services:
+  web:
+    container_name: 'jobs-backend'
+    build: .
+    ports:
+      - "3100:3000"
+      # - "5000:4000"
+  # redis:
+  #   image: "redis:alpine"
