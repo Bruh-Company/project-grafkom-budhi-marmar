@@ -32,7 +32,7 @@ app.listen(portNumber, () => {
 /**
  * request
  */
-app.get('/computer-graphics', (req, res) => {
+app.get('/', (req, res) => {
     app.engine('html', require('ejs').renderFile);
     
     app.use(express.static('public/js-src'));
