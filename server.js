@@ -6,6 +6,8 @@ const publicDirectory = path.join(__dirname, 'public');
 const configDirectory = path.join(__dirname, 'config');
 const portNumber = process.env.PORT || 3100;
 const app = express();
+app.engine('html', require('ejs').renderFile);
+app.use(express.static('public/js-src'));
 
 /**
  * live reload (bwt pas developing) ===================================
@@ -37,9 +39,7 @@ app.get('/', (req, res) => {
     return res.render(publicDirectory + '/patungan.html',)
 });
 app.get('/smangka', (req, res) => {
-    app.engine('html', require('ejs').renderFile);
     
-    app.use(express.static('public/js-src'));
 
     const current = new Date();
     const now = `${current.getHours().toString().padStart(2,'0')}:${current.getMinutes().toString().padStart(2,'0')}:${current.getSeconds().toString().padStart(2,'0')}`;
