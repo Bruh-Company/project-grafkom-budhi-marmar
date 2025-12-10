@@ -33,6 +33,10 @@ app.listen(portNumber, () => {
  * request
  */
 app.get('/', (req, res) => {
+
+    return res.render(publicDirectory + '/patungan.html',)
+});
+app.get('/smangka', (req, res) => {
     app.engine('html', require('ejs').renderFile);
     
     app.use(express.static('public/js-src'));

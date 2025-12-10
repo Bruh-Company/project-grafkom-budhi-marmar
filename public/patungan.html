@@ -1,0 +1,1576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Split Bill - Split Your Bills Easily</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>💰</text></svg>">
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image/2.6.0/dom-to-image.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'slide-down': 'slideDown 0.2s ease-out',
+                        'fade-in': 'fadeIn 0.2s ease-out'
+                    },
+                    keyframes: {
+                        slideDown: {
+                            '0%': { transform: 'translateY(-10px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' }
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        input, select, textarea { font-size: 16px; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- TRANSLATIONS ---
+        const translations = {
+            en: {
+                title: "Split Bill",
+                subtitle: "Split bills easily and fairly",
+                autoSaved: "Auto-saved",
+                scanReceipt: "Scan Receipt",
+                scanReceiptDesc: "Drag & drop image or click to upload",
+                scanReceiptFormat: "Supports JPG, PNG (max 10MB)",
+                chooseFile: "Choose File",
+                dropToScan: "Drop to scan",
+                scanningReceipt: "Scanning receipt...",
+                scanSuccess: "Success! Found",
+                scanFailed: "Failed to scan receipt",
+                items: "items",
+                noteTitle: "Note:",
+                noteDesc: "The receipt scanning feature uses OCR and may not be 100% accurate. Please double-check the detected data before using it.",
+                peopleList: "People List",
+                personNamePlaceholder: "Person name (Press Enter)",
+                add: "Add",
+                noPeopleAdded: "No people added yet.",
+                itemsList: "Items List",
+                itemPlaceholder: "Item #",
+                deleteItem: "Delete Item",
+                addPeopleFirst: "Add people first",
+                addItem: "Add Item",
+                pricePerUnit: "Per Unit",
+                priceTotal: "Total",
+                priceTypeLabel: "Price is",
+                additionalCosts: "Additional Costs",
+                shipping: "Shipping",
+                serviceFee: "Service Fee",
+                tax: "Tax",
+                promoDiscount: "Promo Discount",
+                voucher: "Voucher",
+                bankAccount: "Bank Account",
+                selectAccount: "Select transfer destination account",
+                addNewAccount: "Add New Account",
+                addNewAccountDesc: "Save account for later use",
+                accountHolderName: "Account Holder Name",
+                accountHolderPlaceholder: "e.g. John Doe",
+                accountNumber: "Account Number",
+                accountNumberPlaceholder: "e.g. 1234567890",
+                bankEwallet: "Bank / E-Wallet",
+                bankEwalletPlaceholder: "e.g. BCA, Mandiri, GoPay",
+                cancel: "Cancel",
+                save: "Save",
+                deleteAccount: "Delete account",
+                accountSaved: "Account saved successfully!",
+                accountExists: "Account already exists!",
+                accountDeleted: "Account deleted successfully!",
+                paymentSummary: "Payment Summary",
+                orderSubtotal: "Order Subtotal:",
+                totalDiscount: "Total Discount:",
+                otherFees: "Other Fees:",
+                total: "Total:",
+                transferTo: "Transfer to:",
+                splitPerPerson: "Split Per Person:",
+                viewDetails: "View Details",
+                hideDetails: "Hide Details",
+                orderDetails: "Order Details",
+                itemsOrdered: "Items Ordered",
+                noItems: "No items",
+                download: "Download",
+                copyImage: "Copy Image",
+                processing: "Processing...",
+                downloaded: "Downloaded successfully!",
+                copied: "Copied successfully!",
+                failedToCopy: "Failed to copy",
+                failedToProcess: "Failed to process",
+                resetTitle: "Reset All Data?",
+                resetMessage: "This action will delete all data including items, people, and costs. Data cannot be recovered.",
+                reset: "Reset",
+                dataReset: "Data reset successfully!",
+                fileMustBeImage: "File must be an image"
+            },
+            id: {
+                title: "Patungan",
+                subtitle: "Bagi biaya dengan mudah dan adil",
+                autoSaved: "Tersimpan otomatis",
+                scanReceipt: "Pindai Struk",
+                scanReceiptDesc: "Seret & lepas gambar atau klik untuk upload",
+                scanReceiptFormat: "Mendukung JPG, PNG (maks 10MB)",
+                chooseFile: "Pilih File",
+                dropToScan: "Lepas untuk memindai",
+                scanningReceipt: "Memindai struk...",
+                scanSuccess: "Berhasil! Ditemukan",
+                scanFailed: "Gagal memindai struk",
+                items: "item",
+                noteTitle: "Catatan:",
+                noteDesc: "Fitur pemindaian struk menggunakan OCR dan mungkin tidak 100% akurat. Mohon periksa kembali data yang terdeteksi sebelum digunakan.",
+                peopleList: "Daftar Orang",
+                personNamePlaceholder: "Nama orang (Tekan Enter)",
+                add: "Tambah",
+                noPeopleAdded: "Belum ada orang yang ditambahkan.",
+                itemsList: "Daftar Barang",
+                itemPlaceholder: "Barang #",
+                deleteItem: "Hapus Barang",
+                addPeopleFirst: "Tambahkan orang terlebih dahulu",
+                addItem: "Tambah Barang",
+                pricePerUnit: "Per Satuan",
+                priceTotal: "Total",
+                priceTypeLabel: "Harga adalah",
+                additionalCosts: "Biaya Tambahan",
+                shipping: "Ongkos Kirim",
+                serviceFee: "Biaya Layanan",
+                tax: "Pajak",
+                promoDiscount: "Diskon Promo",
+                voucher: "Voucher",
+                bankAccount: "Rekening Bank",
+                selectAccount: "Pilih rekening tujuan transfer",
+                addNewAccount: "Tambah Rekening Baru",
+                addNewAccountDesc: "Simpan rekening untuk digunakan nanti",
+                accountHolderName: "Nama Pemilik Rekening",
+                accountHolderPlaceholder: "contoh: John Doe",
+                accountNumber: "Nomor Rekening",
+                accountNumberPlaceholder: "contoh: 1234567890",
+                bankEwallet: "Bank / E-Wallet",
+                bankEwalletPlaceholder: "contoh: BCA, Mandiri, GoPay",
+                cancel: "Batal",
+                save: "Simpan",
+                deleteAccount: "Hapus rekening",
+                accountSaved: "Rekening berhasil disimpan!",
+                accountExists: "Rekening sudah ada!",
+                accountDeleted: "Rekening berhasil dihapus!",
+                paymentSummary: "Ringkasan Pembayaran",
+                orderSubtotal: "Subtotal Pesanan:",
+                totalDiscount: "Total Diskon:",
+                otherFees: "Biaya Lainnya:",
+                total: "Total:",
+                transferTo: "Transfer ke:",
+                splitPerPerson: "Bagi Per Orang:",
+                viewDetails: "Lihat Detail",
+                hideDetails: "Sembunyikan Detail",
+                orderDetails: "Detail Pesanan",
+                itemsOrdered: "Barang yang Dipesan",
+                noItems: "Tidak ada barang",
+                download: "Unduh",
+                copyImage: "Salin Gambar",
+                processing: "Memproses...",
+                downloaded: "Berhasil diunduh!",
+                copied: "Berhasil disalin!",
+                failedToCopy: "Gagal menyalin",
+                failedToProcess: "Gagal memproses",
+                resetTitle: "Reset Semua Data?",
+                resetMessage: "Tindakan ini akan menghapus semua data termasuk barang, orang, dan biaya. Data tidak dapat dikembalikan.",
+                reset: "Reset",
+                dataReset: "Data berhasil direset!",
+                fileMustBeImage: "File harus berupa gambar"
+            }
+        };
+
+        // --- ICONS ---
+        const Trash2 = ({ className }) => (
+            <svg className={className || "w-6 h-6"} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+        );
+        const Plus = ({ className }) => (
+            <svg className={className || "w-6 h-6"} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+        );
+        const DollarSign = ({ className }) => (
+            <svg className={className || "w-6 h-6"} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        );
+        const Users = ({ className }) => (
+            <svg className={className || "w-6 h-6"} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+        );
+        const CreditCard = ({ className }) => (
+            <svg className={className || "w-6 h-6"} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
+        );
+        const Download = ({ className }) => (
+            <svg className={className || "w-6 h-6"} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+        );
+        const Copy = ({ className }) => (
+            <svg className={className || "w-6 h-6"} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+        );
+        const ChevronDown = ({ className }) => (
+            <svg className={className || "w-6 h-6"} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+        );
+        const Check = ({ className }) => (
+            <svg className={className || "w-6 h-6"} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+        );
+        const Camera = ({ className }) => (
+            <svg className={className || "w-6 h-6"} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+        );
+        const Upload = ({ className }) => (
+            <svg className={className || "w-6 h-6"} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+        );
+        const RefreshCw = ({ className }) => (
+            <svg className={className || "w-6 h-6"} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+        );
+        const Globe = ({ className }) => (
+            <svg className={className || "w-6 h-6"} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        );
+
+        // --- HELPER COMPONENT: Formatted Input ---
+        const FormattedInput = ({ label, value, onChange, type = 'currency', placeholder = '0' }) => {
+            const handleChange = (e) => {
+                const rawValue = e.target.value.replace(/[^0-9]/g, '');
+                onChange(rawValue);
+            };
+
+            const displayValue = value ? Number(value).toLocaleString('id-ID') : '';
+
+            return (
+                <div>
+                    {label && <label className="block text-xs font-medium text-gray-500 uppercase mb-1">{label}</label>}
+                    <div className="relative rounded-md shadow-sm">
+                        {type === 'currency' && (
+                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                <span className="text-gray-500 sm:text-sm font-medium">Rp</span>
+                            </div>
+                        )}
+                        <input
+                            type="text" 
+                            inputMode="numeric"
+                            value={displayValue}
+                            onChange={handleChange}
+                            placeholder={placeholder}
+                            className={`block w-full rounded-lg border border-gray-300 py-2.5 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 text-base sm:text-sm focus:outline-none bg-white ${
+                                type === 'currency' ? 'pl-10 pr-4' : 'pl-4 pr-8'
+                            }`}
+                        />
+                        {type === 'percentage' && (
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                                <span className="text-gray-500 sm:text-sm font-medium">%</span>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        // --- CUSTOM ACCOUNT SELECTOR COMPONENT ---
+        const AccountSelector = ({ options, selectedValue, onChange, label, customName, customNumber, customVendor, onCustomNameChange, onCustomNumberChange, onCustomVendorChange, onSaveCustomAccount, onDeleteAccount, t }) => {
+            const [isOpen, setIsOpen] = useState(false);
+            const [showCustomModal, setShowCustomModal] = useState(false);
+            const dropdownRef = useRef(null);
+
+            useEffect(() => {
+                const handleClickOutside = (event) => {
+                    if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                        setIsOpen(false);
+                    }
+                };
+                document.addEventListener('mousedown', handleClickOutside);
+                return () => document.removeEventListener('mousedown', handleClickOutside);
+            }, []);
+
+            const selectedOption = options.find(opt => opt.number === selectedValue) || options[0];
+            
+            const customOption = options.find(opt => opt.number === 'CUSTOM');
+            const regularAccounts = options.filter(opt => opt.number !== 'CUSTOM');
+
+            const handleSelect = (accountNumber) => {
+                if (accountNumber === 'CUSTOM') {
+                    setIsOpen(false);
+                    setShowCustomModal(true);
+                } else {
+                    onChange(accountNumber);
+                    setIsOpen(false);
+                }
+            };
+
+            const handleDelete = (e, accountNumber) => {
+                e.stopPropagation();
+                if (accountNumber !== 'CUSTOM' && onDeleteAccount) {
+                    onDeleteAccount(accountNumber);
+                }
+            };
+
+            const handleSaveCustom = () => {
+                if (customName.trim() && customNumber.trim() && customVendor.trim()) {
+                    onSaveCustomAccount();
+                    setShowCustomModal(false);
+                }
+            };
+
+            const handleCancelCustom = () => {
+                setShowCustomModal(false);
+                onCustomNameChange('');
+                onCustomNumberChange('');
+                onCustomVendorChange('');
+            };
+
+            return (
+                <>
+                    <div className="space-y-3">
+                        <div className="relative" ref={dropdownRef}>
+                            {label && <label className="block text-xs font-medium text-gray-500 uppercase mb-1">{label}</label>}
+                            <button
+                                type="button"
+                                onClick={() => setIsOpen(!isOpen)}
+                                className="w-full bg-white border border-gray-300 rounded-lg py-2.5 px-4 text-left flex items-center justify-between focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900"
+                            >
+                                <span className={`block truncate text-base sm:text-sm ${!selectedOption || selectedOption.number === 'CUSTOM' ? 'text-gray-400' : ''}`}>
+                                    {selectedOption && selectedOption.number !== 'CUSTOM'
+                                        ? `${selectedOption.name} - ${selectedOption.vendor}` 
+                                        : t.selectAccount}
+                                </span>
+                                <ChevronDown className="w-4 h-4 text-gray-500" />
+                            </button>
+
+                            {isOpen && (
+                                <div className="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-lg py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none animate-fade-in sm:text-sm">
+                                    {regularAccounts.map((option, index) => (
+                                        <div
+                                            key={index}
+                                            className={`cursor-pointer select-none relative py-3 pl-10 pr-4 hover:bg-gray-50 transition ${
+                                                option.number === selectedValue ? 'bg-gray-50 text-gray-900 font-medium' : 'text-gray-700'
+                                            }`}
+                                            onClick={() => handleSelect(option.number)}
+                                        >
+                                            {option.number === selectedValue && (
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-900">
+                                                    <Check className="w-4 h-4" />
+                                                </span>
+                                            )}
+                                            
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex flex-col flex-1 min-w-0 pr-2">
+                                                    <span className="block truncate font-semibold">
+                                                        {`${option.name} - ${option.vendor}`}
+                                                    </span>
+                                                    <span className="block truncate text-xs text-gray-500">{option.number}</span>
+                                                </div>
+                                                
+                                                <button
+                                                    onClick={(e) => handleDelete(e, option.number)}
+                                                    className="text-gray-400 hover:text-red-500 transition p-1 rounded hover:bg-red-50 flex-shrink-0"
+                                                    title={t.deleteAccount}
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    
+                                    {regularAccounts.length > 0 && (
+                                        <div className="border-t border-gray-200 my-1"></div>
+                                    )}
+                                    
+                                    {customOption && (
+                                        <div
+                                            className="cursor-pointer select-none relative py-3 pl-10 pr-4 hover:bg-gray-50 transition text-gray-700"
+                                            onClick={() => handleSelect(customOption.number)}
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex flex-col flex-1 min-w-0 pr-2">
+                                                    <span className="block truncate font-semibold text-gray-900">
+                                                        ➕ {t.addNewAccount}
+                                                    </span>
+                                                    <span className="block truncate text-xs text-gray-500">
+                                                        {t.addNewAccountDesc}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {showCustomModal && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4 animate-fade-in">
+                            <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-2xl animate-slide-down">
+                                <h3 className="text-lg font-bold text-gray-900 mb-4">{t.addNewAccount}</h3>
+                                
+                                <div className="space-y-4 mb-6">
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-500 uppercase mb-1">{t.accountHolderName}</label>
+                                        <input
+                                            type="text"
+                                            value={customName}
+                                            onChange={(e) => onCustomNameChange(e.target.value)}
+                                            placeholder={t.accountHolderPlaceholder}
+                                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-900 focus:border-gray-900 focus:outline-none bg-white text-base sm:text-sm"
+                                            autoFocus
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-500 uppercase mb-1">{t.accountNumber}</label>
+                                        <input
+                                            type="text"
+                                            inputMode="numeric"
+                                            value={customNumber}
+                                            onChange={(e) => onCustomNumberChange(e.target.value)}
+                                            placeholder={t.accountNumberPlaceholder}
+                                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-900 focus:border-gray-900 focus:outline-none bg-white text-base sm:text-sm font-mono"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-500 uppercase mb-1">{t.bankEwallet}</label>
+                                        <input
+                                            type="text"
+                                            value={customVendor}
+                                            onChange={(e) => onCustomVendorChange(e.target.value)}
+                                            placeholder={t.bankEwalletPlaceholder}
+                                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-900 focus:border-gray-900 focus:outline-none bg-white text-base sm:text-sm"
+                                        />
+                                    </div>
+                                </div>
+                                
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={handleCancelCustom}
+                                        className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium"
+                                    >
+                                        {t.cancel}
+                                    </button>
+                                    <button
+                                        onClick={handleSaveCustom}
+                                        disabled={!customName.trim() || !customNumber.trim() || !customVendor.trim()}
+                                        className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-black transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {t.save}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </>
+            );
+        };
+
+        // --- CONFIRMATION MODAL ---
+        const ConfirmModal = ({ isOpen, onConfirm, onCancel, title, message, confirmText, cancelText }) => {
+            if (!isOpen) return null;
+
+            return (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4 animate-fade-in">
+                    <div className="bg-white rounded-xl p-6 max-w-sm w-full shadow-2xl animate-slide-down">
+                        <h3 className="text-lg font-bold text-gray-900 mb-2">{title}</h3>
+                        <p className="text-gray-600 mb-6">{message}</p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={onCancel}
+                                className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium"
+                            >
+                                {cancelText}
+                            </button>
+                            <button
+                                onClick={onConfirm}
+                                className="flex-1 px-4 py-2.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition font-medium"
+                            >
+                                {confirmText}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- MAIN APP ---
+        function SplitBill() {
+            const appVersion = 'v2.1.0';
+            const STORAGE_KEY = 'splitBillData';
+            const LANGUAGE_KEY = 'splitBillLanguage';
+            
+            // Load language from localStorage or default to English
+            const loadLanguage = () => {
+                try {
+                    const savedLanguage = localStorage.getItem(LANGUAGE_KEY);
+                    return savedLanguage || 'en';
+                } catch (error) {
+                    return 'en';
+                }
+            };
+
+            const [language, setLanguage] = useState(loadLanguage());
+            const t = translations[language];
+
+            // Save language to localStorage
+            useEffect(() => {
+                try {
+                    localStorage.setItem(LANGUAGE_KEY, language);
+                } catch (error) {
+                    console.error('Error saving language:', error);
+                }
+            }, [language]);
+
+            const toggleLanguage = () => {
+                setLanguage(prev => prev === 'en' ? 'id' : 'en');
+            };
+
+            // Load initial data from localStorage or use defaults
+            const loadFromStorage = () => {
+                try {
+                    const savedData = localStorage.getItem(STORAGE_KEY);
+                    if (savedData) {
+                        return JSON.parse(savedData);
+                    }
+                } catch (error) {
+                    console.error('Error loading from localStorage:', error);
+                }
+                return null;
+            };
+
+            const initialData = loadFromStorage();
+
+            const [items, setItems] = useState(
+                initialData?.items || [{ id: 1, name: '', price: '', persons: [], priceType: 'unit' }]
+            );
+            const [persons, setPersons] = useState(initialData?.persons || []);
+            const [newPersonName, setNewPersonName] = useState('');
+            
+            const [ongkir, setOngkir] = useState(initialData?.ongkir || '');
+            const [biayaLayanan, setBiayaLayanan] = useState(initialData?.biayaLayanan || '');
+            const [tax, setTax] = useState(initialData?.tax || ''); 
+            const [diskon, setDiskon] = useState(initialData?.diskon || '');
+            const [voucher, setVoucher] = useState(initialData?.voucher || '');
+            
+            const [bankAccounts, setBankAccounts] = useState(
+                initialData?.bankAccounts || [
+                    { name: 'Custom', number: 'CUSTOM', vendor: 'Custom' }
+                ]
+            );
+            
+            const [selectedAccount, setSelectedAccount] = useState(
+                initialData?.selectedAccount || null
+            );
+            const [customAccountName, setCustomAccountName] = useState(initialData?.customAccountName || '');
+            const [customAccountNumber, setCustomAccountNumber] = useState(initialData?.customAccountNumber || '');
+            const [customAccountVendor, setCustomAccountVendor] = useState(initialData?.customAccountVendor || '');
+            
+            const [isCapturing, setIsCapturing] = useState(false);
+            const [captureStatus, setCaptureStatus] = useState('');
+            const summaryRef = useRef(null);
+            const fileInputRef = useRef(null);
+            
+            const [isScanning, setIsScanning] = useState(false);
+            const [scanProgress, setScanProgress] = useState(0);
+            const [isDragging, setIsDragging] = useState(false);
+            
+            const [showResetModal, setShowResetModal] = useState(false);
+            const [openAccordions, setOpenAccordions] = useState({});
+
+            // Save to localStorage whenever data changes
+            useEffect(() => {
+                const dataToSave = {
+                    items,
+                    persons,
+                    ongkir,
+                    biayaLayanan,
+                    tax,
+                    diskon,
+                    voucher,
+                    bankAccounts,
+                    selectedAccount,
+                    customAccountName,
+                    customAccountNumber,
+                    customAccountVendor,
+                    lastSaved: new Date().toISOString()
+                };
+                
+                try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+                } catch (error) {
+                    console.error('Error saving to localStorage:', error);
+                }
+            }, [items, persons, ongkir, biayaLayanan, tax, diskon, voucher, bankAccounts, selectedAccount, customAccountName, customAccountNumber, customAccountVendor]);
+
+            const saveCustomAccount = () => {
+                if (customAccountName.trim() && customAccountNumber.trim() && customAccountVendor.trim()) {
+                    const newAccount = {
+                        name: customAccountName.trim(),
+                        number: customAccountNumber.trim(),
+                        vendor: customAccountVendor.trim()
+                    };
+                    
+                    const accountExists = bankAccounts.some(
+                        acc => acc.number === newAccount.number && acc.number !== 'CUSTOM'
+                    );
+                    
+                    if (!accountExists) {
+                        const updatedAccounts = [...bankAccounts, newAccount];
+                        setBankAccounts(updatedAccounts);
+                        setSelectedAccount(newAccount.number);
+                        
+                        setCustomAccountName('');
+                        setCustomAccountNumber('');
+                        setCustomAccountVendor('');
+                        
+                        setCaptureStatus(t.accountSaved);
+                        setTimeout(() => setCaptureStatus(''), 2000);
+                    } else {
+                        setCaptureStatus(t.accountExists);
+                        setTimeout(() => setCaptureStatus(''), 2000);
+                    }
+                }
+            };
+
+            const deleteBankAccount = (accountNumber) => {
+                if (accountNumber === 'CUSTOM') return;
+                
+                const updatedAccounts = bankAccounts.filter(acc => acc.number !== accountNumber);
+                setBankAccounts(updatedAccounts);
+                
+                if (selectedAccount === accountNumber) {
+                    setSelectedAccount(null);
+                }
+                
+                setCaptureStatus(t.accountDeleted);
+                setTimeout(() => setCaptureStatus(''), 2000);
+            };
+
+            const resetAllData = () => {
+                setItems([{ id: 1, name: '', price: '', persons: [], priceType: 'unit' }]);
+                setPersons([]);
+                setNewPersonName('');
+                setOngkir('');
+                setBiayaLayanan('');
+                setTax('');
+                setDiskon('');
+                setVoucher('');
+                setSelectedAccount(null);
+                setCustomAccountName('');
+                setCustomAccountNumber('');
+                setCustomAccountVendor('');
+                
+                const dataToSave = {
+                    items: [{ id: 1, name: '', price: '', persons: [], priceType: 'unit' }],
+                    persons: [],
+                    ongkir: '',
+                    biayaLayanan: '',
+                    tax: '',
+                    diskon: '',
+                    voucher: '',
+                    bankAccounts: bankAccounts,
+                    selectedAccount: null,
+                    customAccountName: '',
+                    customAccountNumber: '',
+                    customAccountVendor: '',
+                    lastSaved: new Date().toISOString()
+                };
+                
+                try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+                } catch (error) {
+                    console.error('Error saving to localStorage:', error);
+                }
+                
+                setShowResetModal(false);
+                setCaptureStatus(t.dataReset);
+                setTimeout(() => setCaptureStatus(''), 2000);
+            };
+
+            const addItem = () => {
+                setItems([...items, { id: Date.now() + Math.random() * 1000000, name: '', price: '', persons: [], priceType: 'unit' }]);
+            };
+
+            const removeItem = (id) => {
+                setItems(items.filter(item => item.id !== id));
+            };
+
+            const updateItem = (id, field, value) => {
+                setItems(items.map(item => 
+                    item.id === id ? { ...item, [field]: value } : item
+                ));
+            };
+
+            const togglePerson = (itemId, person) => {
+                setItems(items.map(item => {
+                    if (item.id === itemId) {
+                        const persons = item.persons.includes(person)
+                            ? item.persons.filter(p => p !== person)
+                            : [...item.persons, person];
+                        return { ...item, persons };
+                    }
+                    return item;
+                }));
+            };
+
+            const addPerson = () => {
+                if (newPersonName.trim()) {
+                    setPersons([...persons, newPersonName.trim()]);
+                    setNewPersonName('');
+                }
+            };
+
+            const removePerson = (person) => {
+                setPersons(persons.filter(p => p !== person));
+                setItems(items.map(item => ({
+                    ...item,
+                    persons: item.persons.filter(p => p !== person)
+                })));
+            };
+
+            const calculateSplit = () => {
+                // Calculate subtotal considering priceType
+                const subtotal = items.reduce((sum, item) => {
+                    const itemPrice = Number(item.price || 0);
+                    if (item.priceType === 'total') {
+                        // If price is total, use it directly
+                        return sum + itemPrice;
+                    } else {
+                        // If price is per unit, multiply by number of people
+                        const quantity = item.persons.length || 1;
+                        return sum + (itemPrice * quantity);
+                    }
+                }, 0);
+                
+                const taxAmount = (subtotal * (Number(tax || 0))) / 100;
+                const totalDiscount = Number(diskon || 0) + Number(voucher || 0);
+                const totalBiaya = Number(ongkir || 0) + Number(biayaLayanan || 0) + taxAmount;
+                const totalSetelahDiskon = subtotal - totalDiscount;
+                const grandTotal = totalSetelahDiskon + totalBiaya;
+
+                const personTotals = {};
+                persons.forEach(person => {
+                    personTotals[person] = 0;
+                });
+
+                items.forEach(item => {
+                    const itemPrice = Number(item.price || 0);
+                    if (item.persons.length > 0 && itemPrice > 0) {
+                        let pricePerPerson;
+                        
+                        if (item.priceType === 'total') {
+                            // If price is total, divide by number of people
+                            pricePerPerson = itemPrice / item.persons.length;
+                        } else {
+                            // If price is per unit, each person pays the unit price
+                            pricePerPerson = itemPrice;
+                        }
+                        
+                        item.persons.forEach(person => {
+                            personTotals[person] += pricePerPerson;
+                        });
+                    }
+                });
+
+                const totalItemsAssigned = Object.values(personTotals).reduce((sum, val) => sum + val, 0);
+                
+                if (totalItemsAssigned > 0) {
+                    persons.forEach(person => {
+                        const proportion = personTotals[person] / totalItemsAssigned;
+                        const discountShare = totalDiscount * proportion;
+                        const biayaShare = totalBiaya * proportion;
+                        
+                        personTotals[person] = personTotals[person] - discountShare + biayaShare;
+                    });
+                }
+
+                return { subtotal, taxAmount, totalDiscount, totalBiaya, grandTotal, personTotals };
+            };
+
+            const getSelectedAccountName = () => {
+                if (selectedAccount === 'CUSTOM') {
+                    return customAccountName || 'Custom';
+                }
+                const account = bankAccounts.find(acc => acc.number === selectedAccount);
+                return account ? account.name : '';
+            };
+
+            const getSelectedAccountVendor = () => {
+                if (selectedAccount === 'CUSTOM') {
+                    return customAccountVendor || 'Custom';
+                }
+                const account = bankAccounts.find(acc => acc.number === selectedAccount);
+                return account ? account.vendor : '';
+            };
+
+            const getSelectedAccountNumber = () => {
+                if (selectedAccount === 'CUSTOM') {
+                    return customAccountNumber || '-';
+                }
+                return selectedAccount;
+            };
+
+            const { subtotal, taxAmount, totalDiscount, totalBiaya, grandTotal, personTotals } = calculateSplit();
+
+            const formatMoney = (amount) => amount.toLocaleString('id-ID');
+            const formatMoneySplit = (amount) => amount.toLocaleString('id-ID', { maximumFractionDigits: 0 });
+
+            const toggleAccordion = (person) => {
+                setOpenAccordions(prev => ({
+                    ...prev,
+                    [person]: !prev[person]
+                }));
+            };
+
+            const getPersonItems = (person) => {
+                return items.filter(item => item.persons.includes(person));
+            };
+
+            const parseReceiptText = (text) => {
+                const lines = text.split('\n').filter(line => line.trim());
+                const detectedItems = [];
+                
+                const itemWithQtyPattern = /^(\d+)x?\s+(.+?)\s+(?:Rp\.?\s*)?(\d{1,3}(?:[.,]\d{3})+)/i;
+                const pricePattern = /(?:Rp\.?\s*)?(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})?)/;
+                const taxPattern = /(?:tax|pajak|ppn|pb1).*?(\d+)%/i;
+                const servicePattern = /(?:service|layanan|order fee|admin).*?(?:Rp\.?\s*)?(\d{1,3}(?:[.,]\d{3})*)/i;
+                const deliveryPattern = /(?:delivery|ongkir|ongkos kirim|delivery fee).*?(?:Rp\.?\s*)?(\d{1,3}(?:[.,]\d{3})*)/i;
+                
+                let totalPromoDiscount = 0;
+                let totalVoucher = 0;
+                let foundSubtotal = false;
+                
+                lines.forEach((line, index) => {
+                    const cleanLine = line.trim();
+                    
+                    if (cleanLine.match(/^(subtotal|total|grand total)/i)) {
+                        foundSubtotal = true;
+                        return;
+                    }
+                    
+                    if (foundSubtotal) return;
+                    
+                    if (cleanLine.match(/order summary|reorder|terima kasih|thank you|receipt|struk|cutlery|profile|contact|earned|points/i)) {
+                        return;
+                    }
+                    
+                    if (cleanLine.toLowerCase().includes('discount') || 
+                        cleanLine.toLowerCase().includes('diskon') || 
+                        cleanLine.toLowerCase().includes('promo') ||
+                        cleanLine.toLowerCase().includes('kota') ||
+                        cleanLine.toLowerCase().includes('sobat') ||
+                        cleanLine.toLowerCase().includes('voucher')) {
+                        
+                        const negativeMatch = cleanLine.match(/-\s*(?:Rp\.?\s*)?(\d{1,3}(?:[.,]\d{3})*)/);
+                        
+                        if (negativeMatch) {
+                            const amount = parseInt(negativeMatch[1].replace(/[.,]/g, ''));
+                            
+                            if (cleanLine.toLowerCase().includes('kota') || 
+                                cleanLine.toLowerCase().includes('sobat') ||
+                                cleanLine.match(/\d+rb min \d+rb/i)) {
+                                totalPromoDiscount += amount;
+                            } else {
+                                totalVoucher += amount;
+                            }
+                            return;
+                        } else {
+                            const positiveMatch = cleanLine.match(/(?:Rp\.?\s*)?(\d{1,3}(?:[.,]\d{3})*)/);
+                            if (positiveMatch) {
+                                const amount = parseInt(positiveMatch[1].replace(/[.,]/g, ''));
+                                if (amount >= 100) {
+                                    totalPromoDiscount += amount;
+                                }
+                            }
+                            return;
+                        }
+                    }
+                    
+                    const qtyMatch = cleanLine.match(itemWithQtyPattern);
+                    if (qtyMatch) {
+                        const quantity = parseInt(qtyMatch[1]);
+                        const itemName = qtyMatch[2].trim();
+                        const totalPrice = qtyMatch[3].replace(/[.,]/g, '');
+                        
+                        if (itemName.length > 2 && totalPrice.length >= 3) {
+                            const unitPrice = Math.round(parseInt(totalPrice) / quantity);
+                            
+                            for (let i = 0; i < quantity; i++) {
+                                detectedItems.push({
+                                    id: Date.now() + Math.random() * 1000000 + index * 100 + i,
+                                    name: itemName,
+                                    price: unitPrice.toString(),
+                                    persons: [],
+                                    priceType: 'unit'
+                                });
+                            }
+                        }
+                        return;
+                    }
+                    
+                    const priceMatch = cleanLine.match(pricePattern);
+                    if (priceMatch && !cleanLine.match(/fee|biaya|ongkir|delivery|tax|pajak/i)) {
+                        const priceStr = priceMatch[1].replace(/[.,]/g, '');
+                        const priceIndex = cleanLine.indexOf(priceMatch[0]);
+                        const itemName = cleanLine.substring(0, priceIndex).replace(/^\d+x?\s*/, '').trim();
+                        
+                        if (itemName && priceStr && itemName.length > 2 && priceStr.length >= 3) {
+                            detectedItems.push({
+                                id: Date.now() + Math.random() * 1000000 + index * 100,
+                                name: itemName,
+                                price: priceStr,
+                                persons: [],
+                                priceType: 'unit'
+                            });
+                        }
+                    }
+                });
+                
+                let detectedTax = '';
+                const taxMatch = text.match(taxPattern);
+                if (taxMatch) {
+                    detectedTax = taxMatch[1];
+                }
+                
+                let detectedService = '';
+                const serviceMatch = text.match(servicePattern);
+                if (serviceMatch) {
+                    detectedService = serviceMatch[1].replace(/[.,]/g, '');
+                }
+                
+                let detectedDelivery = '';
+                const deliveryMatch = text.match(deliveryPattern);
+                if (deliveryMatch) {
+                    detectedDelivery = deliveryMatch[1].replace(/[.,]/g, '');
+                }
+                
+                return {
+                    items: detectedItems,
+                    tax: detectedTax,
+                    biayaLayanan: detectedService,
+                    ongkir: detectedDelivery,
+                    diskon: totalPromoDiscount > 0 ? totalPromoDiscount.toString() : '',
+                    voucher: totalVoucher > 0 ? totalVoucher.toString() : ''
+                };
+            };
+
+            const handleScanReceipt = async (file) => {
+                if (!file) return;
+                
+                setIsScanning(true);
+                setScanProgress(0);
+                setCaptureStatus(t.scanningReceipt);
+                
+                try {
+                    const result = await Tesseract.recognize(file, 'ind+eng', {
+                        logger: (m) => {
+                            if (m.status === 'recognizing text') {
+                                setScanProgress(Math.round(m.progress * 100));
+                            }
+                        }
+                    });
+                    
+                    const parsedData = parseReceiptText(result.data.text);
+                    
+                    if (parsedData.items.length > 0) {
+                        setItems(parsedData.items);
+                    }
+                    
+                    if (parsedData.tax) setTax(parsedData.tax);
+                    if (parsedData.biayaLayanan) setBiayaLayanan(parsedData.biayaLayanan);
+                    if (parsedData.ongkir) setOngkir(parsedData.ongkir);
+                    if (parsedData.diskon) setDiskon(parsedData.diskon);
+                    if (parsedData.voucher) setVoucher(parsedData.voucher);
+                    
+                    setCaptureStatus(`${t.scanSuccess} ${parsedData.items.length} ${t.items}`);
+                } catch (error) {
+                    console.error(error);
+                    setCaptureStatus(t.scanFailed);
+                }
+                
+                setTimeout(() => {
+                    setIsScanning(false);
+                    setScanProgress(0);
+                    setCaptureStatus('');
+                }, 3000);
+            };
+
+            const triggerFileInput = () => {
+                fileInputRef.current?.click();
+            };
+
+            const handleDragOver = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsDragging(true);
+            };
+
+            const handleDragLeave = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsDragging(false);
+            };
+
+            const handleDrop = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsDragging(false);
+                
+                const files = e.dataTransfer.files;
+                if (files && files[0]) {
+                    const file = files[0];
+                    if (file.type.startsWith('image/')) {
+                        handleScanReceipt(file);
+                    } else {
+                        setCaptureStatus(t.fileMustBeImage);
+                        setTimeout(() => setCaptureStatus(''), 2000);
+                    }
+                }
+            };
+
+            const handleCapture = async (actionType) => {
+                if (!summaryRef.current) return;
+                setIsCapturing(true);
+                setCaptureStatus(t.processing);
+
+                try {
+                    await document.fonts.ready;
+                    
+                    const dataUrl = await domtoimage.toPng(summaryRef.current, {
+                        quality: 1,
+                        bgcolor: '#f9fafb',
+                        style: {
+                            transform: 'scale(5)',
+                            transformOrigin: 'top left',
+                            width: summaryRef.current.offsetWidth + 'px',
+                            height: summaryRef.current.offsetHeight + 'px'
+                        },
+                        width: summaryRef.current.offsetWidth * 5,
+                        height: summaryRef.current.offsetHeight * 5
+                    });
+
+                    if (actionType === 'download') {
+                        const link = document.createElement('a');
+                        link.download = `split-bill-${Date.now()}.png`;
+                        link.href = dataUrl;
+                        link.click();
+                        setCaptureStatus(t.downloaded);
+                    } else {
+                        const response = await fetch(dataUrl);
+                        const blob = await response.blob();
+                        
+                        try {
+                            await navigator.clipboard.write([
+                                new ClipboardItem({ 'image/png': blob })
+                            ]);
+                            setCaptureStatus(t.copied);
+                        } catch (err) {
+                            console.error(err);
+                            setCaptureStatus(t.failedToCopy);
+                        }
+                    }
+                } catch (error) {
+                    console.error(error);
+                    setCaptureStatus(t.failedToProcess);
+                }
+
+                setTimeout(() => {
+                    setCaptureStatus('');
+                    setIsCapturing(false);
+                }, 2000);
+            };
+
+            return (
+                <div className="min-h-screen bg-gray-50 text-gray-900 py-6 px-3 sm:py-8 sm:px-4 font-sans">
+                    <div className="max-w-4xl mx-auto">
+                        <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-8 border border-gray-100">
+                            {/* Header */}
+                            <div className="text-center mb-6 sm:mb-8">
+                                <div className="flex items-center justify-between mb-2">
+                                    {/* Left - Language Toggle */}
+                                    <button
+                                        onClick={toggleLanguage}
+                                        className="flex items-center gap-1.5 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition border border-gray-200 hover:border-gray-300"
+                                        title={language === 'en' ? 'Switch to Indonesian' : 'Ganti ke English'}
+                                    >
+                                        <Globe className="w-5 h-5" />
+                                        <span className="text-sm font-bold uppercase">{language}</span>
+                                    </button>
+                                    
+                                    {/* Center title */}
+                                    <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 tracking-tight">{t.title}</h1>
+                                    
+                                    {/* Right reset button */}
+                                    <button
+                                        onClick={() => setShowResetModal(true)}
+                                        className="flex items-center gap-1.5 px-3 py-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition border border-gray-200 hover:border-red-200"
+                                        title={language === 'en' ? 'Reset all data' : 'Reset semua data'}
+                                    >
+                                        <RefreshCw className="w-5 h-5" />
+                                    </button>
+                                </div>
+                                <p className="text-sm sm:text-base text-gray-500">{t.subtitle}</p>
+                                <p className="text-xs text-gray-400 mt-1">{appVersion} • {t.autoSaved}</p>
+                            </div>
+
+                            {/* Drag and Drop Zone */}
+                            <div className="mb-6">
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => handleScanReceipt(e.target.files[0])}
+                                    className="hidden"
+                                />
+                                <div
+                                    onDragOver={handleDragOver}
+                                    onDragLeave={handleDragLeave}
+                                    onDrop={handleDrop}
+                                    onClick={triggerFileInput}
+                                    className={`relative border-2 border-dashed rounded-xl p-8 sm:p-12 text-center cursor-pointer transition-all ${
+                                        isDragging 
+                                            ? 'border-gray-900 bg-gray-50 scale-[1.02]' 
+                                            : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
+                                    } ${isScanning ? 'pointer-events-none opacity-50' : ''}`}
+                                >
+                                    <div className="flex flex-col items-center gap-3">
+                                        <div className={`rounded-full p-4 transition-colors ${
+                                            isDragging ? 'bg-gray-900' : 'bg-gray-100'
+                                        }`}>
+                                            <Camera className={`w-8 h-8 ${isDragging ? 'text-white' : 'text-gray-600'}`} />
+                                        </div>
+                                        <div>
+                                            <p className="text-base sm:text-lg font-semibold text-gray-900 mb-1">
+                                                {isDragging ? t.dropToScan : t.scanReceipt}
+                                            </p>
+                                            <p className="text-sm text-gray-500">
+                                                {t.scanReceiptDesc}
+                                            </p>
+                                            <p className="text-xs text-gray-400 mt-1">
+                                                {t.scanReceiptFormat}
+                                            </p>
+                                        </div>
+                                        {!isScanning && (
+                                            <button
+                                                type="button"
+                                                className="mt-2 inline-flex items-center gap-2 bg-gray-900 text-white px-6 py-2.5 rounded-lg hover:bg-black transition shadow-sm font-medium"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    triggerFileInput();
+                                                }}
+                                            >
+                                                <Upload className="w-5 h-5" />
+                                                {t.chooseFile}
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                                
+                                {/* Disclaimer */}
+                                <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-3 flex gap-2 items-center">
+                                    <span className="text-amber-600 text-lg flex-shrink-0 leading-none mt-0.5">⚠️</span>
+                                    <div className="text-xs text-amber-800 flex-1">
+                                        <span className="font-semibold">{t.noteTitle}</span> {t.noteDesc}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* People Section */}
+                            <div className="bg-white rounded-xl p-4 sm:p-6 mb-6 border border-gray-200">
+                                <div className="flex items-center gap-2 mb-4 border-b border-gray-100 pb-2">
+                                    <Users className="w-5 h-5 text-gray-700" />
+                                    <h2 className="text-lg font-bold text-gray-900">{t.peopleList}</h2>
+                                </div>
+                                <div className="flex flex-col sm:flex-row gap-2 mb-4">
+                                    <input
+                                        type="text"
+                                        value={newPersonName}
+                                        onChange={(e) => setNewPersonName(e.target.value)}
+                                        onKeyPress={(e) => e.key === 'Enter' && addPerson()}
+                                        placeholder={t.personNamePlaceholder}
+                                        className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-900 focus:border-gray-900 focus:outline-none bg-gray-50 text-base sm:text-sm"
+                                    />
+                                    <button
+                                        onClick={addPerson}
+                                        className="bg-gray-900 text-white px-6 py-2.5 rounded-lg hover:bg-black transition shadow-sm font-medium"
+                                    >
+                                        {t.add}
+                                    </button>
+                                </div>
+                                {persons.length === 0 ? (
+                                    <p className="text-sm text-gray-400 italic">{t.noPeopleAdded}</p>
+                                ) : (
+                                    <div className="flex flex-wrap gap-2">
+                                        {persons.map(person => (
+                                            <div key={person} className="bg-gray-100 text-gray-800 px-3 py-2 rounded-full flex items-center gap-2 border border-gray-200 shadow-sm">
+                                                <span className="font-medium text-sm">{person}</span>
+                                                <button
+                                                    onClick={() => removePerson(person)}
+                                                    className="text-gray-400 hover:text-gray-600 transition p-1"
+                                                >
+                                                    <span className="block w-3 h-3 leading-3">×</span>
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Items Section */}
+                            <div className="bg-white rounded-xl p-4 sm:p-6 mb-6 border border-gray-200">
+                                <div className="flex items-center gap-2 mb-4 border-b border-gray-100 pb-2">
+                                    <DollarSign className="w-5 h-5 text-gray-700" />
+                                    <h2 className="text-lg font-bold text-gray-900">{t.itemsList}</h2>
+                                </div>
+                                
+                                <div className="space-y-6">
+                                    {items.map((item, index) => (
+                                        <div key={item.id} className="bg-gray-50 p-4 rounded-lg border border-gray-200 relative group">
+                                            <div className="flex gap-3 items-start mb-3">
+                                                <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                    <input
+                                                        type="text"
+                                                        value={item.name}
+                                                        onChange={(e) => updateItem(item.id, 'name', e.target.value)}
+                                                        placeholder={`${t.itemPlaceholder}${index + 1}`}
+                                                        className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-900 focus:border-gray-900 focus:outline-none bg-white text-base sm:text-sm"
+                                                    />
+                                                    <FormattedInput 
+                                                        value={item.price}
+                                                        onChange={(val) => updateItem(item.id, 'price', val)}
+                                                    />
+                                                </div>
+                                                
+                                                <button
+                                                    onClick={() => removeItem(item.id)}
+                                                    className="p-2 bg-white border border-gray-200 rounded-lg text-gray-400 hover:text-red-500 hover:border-red-200 transition shadow-sm h-[46px] w-[46px] sm:h-[42px] sm:w-[42px] flex items-center justify-center shrink-0"
+                                                    title={t.deleteItem}
+                                                >
+                                                    <Trash2 className="w-5 h-5" />
+                                                </button>
+                                            </div>
+
+                                            {/* Price Type Toggle */}
+                                            <div className="mb-3 flex items-center gap-2">
+                                                <span className="text-xs text-gray-500 font-medium">{t.priceTypeLabel}:</span>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={() => updateItem(item.id, 'priceType', 'unit')}
+                                                        className={`px-3 py-1 rounded-md text-xs font-medium transition border ${
+                                                            item.priceType === 'unit'
+                                                                ? 'bg-gray-900 text-white border-gray-900'
+                                                                : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-100'
+                                                        }`}
+                                                    >
+                                                        {t.pricePerUnit}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => updateItem(item.id, 'priceType', 'total')}
+                                                        className={`px-3 py-1 rounded-md text-xs font-medium transition border ${
+                                                            item.priceType === 'total'
+                                                                ? 'bg-gray-900 text-white border-gray-900'
+                                                                : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-100'
+                                                        }`}
+                                                    >
+                                                        {t.priceTotal}
+                                                    </button>
+                                                </div>
+                                                {item.persons.length > 0 && (
+                                                    <span className="text-xs text-gray-400 ml-2">
+                                                        {item.priceType === 'unit' 
+                                                            ? `(${item.persons.length}x Rp ${formatMoney(Number(item.price || 0))} = Rp ${formatMoney(Number(item.price || 0) * item.persons.length)})`
+                                                            : `(Rp ${formatMoney(Number(item.price || 0))} ÷ ${item.persons.length} = Rp ${formatMoney(Number(item.price || 0) / item.persons.length)})`
+                                                        }
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            <div className="mt-4">
+                                                <div className="flex flex-wrap gap-2">
+                                                    {persons.length === 0 ? (
+                                                        <span className="text-xs text-gray-400">{t.addPeopleFirst}</span>
+                                                    ) : persons.map(person => (
+                                                        <button
+                                                            key={person}
+                                                            onClick={() => togglePerson(item.id, person)}
+                                                            className={`px-4 py-2 rounded-full text-sm font-medium transition border select-none ${
+                                                                item.persons.includes(person)
+                                                                    ? 'bg-gray-900 text-white border-gray-900 shadow-sm'
+                                                                    : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-100'
+                                                            }`}
+                                                        >
+                                                            {person}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                                
+                                <button
+                                    onClick={addItem}
+                                    className="w-full mt-6 border-2 border-dashed border-gray-300 text-gray-500 py-3 rounded-lg hover:border-gray-400 hover:text-gray-700 transition flex items-center justify-center gap-2"
+                                >
+                                    <Plus className="w-5 h-5" />
+                                    {t.addItem}
+                                </button>
+                            </div>
+
+                            {/* Additional Costs Section */}
+                            <div className="bg-white rounded-xl p-4 sm:p-6 mb-6 border border-gray-200">
+                                <div className="flex items-center gap-2 mb-4 border-b border-gray-100 pb-2">
+                                    <CreditCard className="w-5 h-5 text-gray-700" />
+                                    <h2 className="text-lg font-bold text-gray-900">{t.additionalCosts}</h2>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <FormattedInput label={t.shipping} value={ongkir} onChange={setOngkir} />
+                                    <FormattedInput label={t.serviceFee} value={biayaLayanan} onChange={setBiayaLayanan} />
+                                    <FormattedInput label={t.tax} value={tax} onChange={setTax} type="percentage" placeholder="0" />
+                                    <FormattedInput label={t.promoDiscount} value={diskon} onChange={setDiskon} />
+                                    <FormattedInput label={t.voucher} value={voucher} onChange={setVoucher} />
+                                    
+                                    {/* Account Selector Component */}
+                                    <AccountSelector 
+                                        label={t.bankAccount}
+                                        options={bankAccounts}
+                                        selectedValue={selectedAccount}
+                                        onChange={setSelectedAccount}
+                                        customName={customAccountName}
+                                        customNumber={customAccountNumber}
+                                        customVendor={customAccountVendor}
+                                        onCustomNameChange={setCustomAccountName}
+                                        onCustomNumberChange={setCustomAccountNumber}
+                                        onCustomVendorChange={setCustomAccountVendor}
+                                        onSaveCustomAccount={saveCustomAccount}
+                                        onDeleteAccount={deleteBankAccount}
+                                        t={t}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Summary Section */}
+                            {subtotal > 0 && persons.length > 0 && (
+                                <>
+                                    <div className="mb-6 overflow-hidden rounded-xl border border-gray-200 shadow-sm">
+                                        <div 
+                                            ref={summaryRef} 
+                                            className="bg-gray-50 p-5 sm:p-8"
+                                        > 
+                                            <div className="flex items-center gap-3 mb-5">
+                                                <div className="bg-gray-900 rounded-full p-1.5">
+                                                    <DollarSign className="w-5 h-5 text-white" />
+                                                </div>
+                                                <h2 className="text-lg sm:text-xl font-bold text-gray-900 uppercase tracking-wide leading-none">
+                                                    {t.paymentSummary}
+                                                </h2>
+                                            </div>
+                                            
+                                            <div className="space-y-3 mb-5 text-sm border-b border-gray-300 pb-4">
+                                                <div className="flex justify-between items-center gap-4">
+                                                    <span className="text-gray-600 whitespace-nowrap">{t.orderSubtotal}</span>
+                                                    <span className="font-mono text-gray-900 whitespace-nowrap">Rp {formatMoney(subtotal)}</span>
+                                                </div>
+
+                                                {taxAmount > 0 && (
+                                                    <div className="flex justify-between items-center gap-4">
+                                                        <span className="text-gray-600 whitespace-nowrap">{t.tax} ({tax}%):</span>
+                                                        <span className="font-mono text-gray-900 whitespace-nowrap">Rp {formatMoney(taxAmount)}</span>
+                                                    </div>
+                                                )}
+
+                                                {totalDiscount > 0 && (
+                                                    <div className="flex justify-between items-center gap-4">
+                                                        <span className="text-gray-600 whitespace-nowrap">{t.totalDiscount}</span>
+                                                        <span className="font-mono text-gray-900 whitespace-nowrap">- Rp {formatMoney(totalDiscount)}</span>
+                                                    </div>
+                                                )}
+                                                {(Number(ongkir) > 0 || Number(biayaLayanan) > 0) && (
+                                                    <div className="flex justify-between items-center gap-4">
+                                                        <span className="text-gray-600 whitespace-nowrap">{t.otherFees}</span>
+                                                        <span className="font-mono text-gray-900 whitespace-nowrap">
+                                                            Rp {formatMoney(Number(ongkir) + Number(biayaLayanan))}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                <div className="flex justify-between items-center gap-4 pt-2">
+                                                    <span className="text-lg sm:text-xl font-bold text-gray-900 whitespace-nowrap">{t.total}</span>
+                                                    <span className="text-lg sm:text-xl font-bold text-gray-900 whitespace-nowrap">Rp {formatMoney(grandTotal)}</span>
+                                                </div>
+                                            </div>
+
+                                            {selectedAccount && selectedAccount !== 'CUSTOM' && selectedAccount !== null && (
+                                                <div className="bg-white border border-gray-200 rounded-xl p-4 sm:p-5 mb-5">
+                                                    <div className="flex items-center gap-2 mb-2 text-gray-500">
+                                                        <CreditCard className="w-4 h-4 flex-shrink-0" />
+                                                        <span className="text-xs font-bold uppercase tracking-wider whitespace-nowrap">{t.transferTo} {getSelectedAccountName()}</span>
+                                                    </div>
+                                                    <div className="text-lg sm:text-xl font-bold text-gray-900 tracking-tight whitespace-nowrap">
+                                                        {getSelectedAccountVendor()} - {getSelectedAccountNumber()}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            <div>
+                                                <h3 className="font-bold text-gray-900 mb-3 text-xs uppercase tracking-widest">{t.splitPerPerson}</h3>
+                                                <div className="space-y-2">
+                                                    {persons.map(person => {
+                                                        const personItems = getPersonItems(person);
+                                                        const isOpen = openAccordions[person] || false;
+                                                        
+                                                        return (
+                                                            <div key={person} className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                                                                {/* Accordion Header */}
+                                                                <div 
+                                                                    className="flex justify-between items-center p-3 cursor-pointer hover:bg-gray-50 transition"
+                                                                    onClick={() => toggleAccordion(person)}
+                                                                >
+                                                                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                                        <span className="font-medium text-gray-700 truncate">{person}</span>
+                                                                        <button 
+                                                                            className="text-gray-400 hover:text-gray-600 transition flex-shrink-0"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                toggleAccordion(person);
+                                                                            }}
+                                                                        >
+                                                                            <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                                                                        </button>
+                                                                    </div>
+                                                                    <span className="text-base sm:text-lg font-bold text-gray-900 font-mono whitespace-nowrap flex-shrink-0 ml-4">
+                                                                        Rp {formatMoneySplit(personTotals[person] || 0)}
+                                                                    </span>
+                                                                </div>
+                                                                
+                                                                {/* Accordion Content */}
+                                                                {isOpen && (
+                                                                    <div className="border-t border-gray-100 p-3 bg-gray-50 animate-slide-down">
+                                                                        <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                                                                            {t.orderDetails}
+                                                                        </div>
+                                                                        {personItems.length === 0 ? (
+                                                                            <p className="text-xs text-gray-400 italic">{t.noItems}</p>
+                                                                        ) : (
+                                                                            <div className="space-y-2">
+                                                                                {personItems.map(item => {
+                                                                                    const itemPrice = Number(item.price || 0);
+                                                                                    let displayPrice;
+                                                                                    
+                                                                                    if (item.priceType === 'total') {
+                                                                                        displayPrice = itemPrice / item.persons.length;
+                                                                                    } else {
+                                                                                        displayPrice = itemPrice;
+                                                                                    }
+                                                                                    
+                                                                                    return (
+                                                                                        <div key={item.id} className="flex justify-between items-start gap-2 text-xs">
+                                                                                            <div className="flex-1 min-w-0">
+                                                                                                <div className="font-medium text-gray-700 truncate">
+                                                                                                    {item.name || t.itemPlaceholder}
+                                                                                                </div>
+                                                                                                {item.priceType === 'total' && item.persons.length > 1 && (
+                                                                                                    <div className="text-gray-400 text-xs">
+                                                                                                        {t.priceTotal}: Rp {formatMoney(itemPrice)} ÷ {item.persons.length}
+                                                                                                    </div>
+                                                                                                )}
+                                                                                            </div>
+                                                                                            <span className="font-mono text-gray-600 whitespace-nowrap flex-shrink-0">
+                                                                                                Rp {formatMoney(displayPrice)}
+                                                                                            </span>
+                                                                                        </div>
+                                                                                    );
+                                                                                })}
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Action Buttons */}
+                                    <div className="flex flex-col sm:flex-row gap-4">
+                                        <button
+                                            onClick={() => handleCapture('download')}
+                                            disabled={isCapturing}
+                                            className="flex-1 bg-white border border-gray-300 text-gray-900 py-3 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                                        >
+                                            <Download className="w-5 h-5" />
+                                            {t.download}
+                                        </button>
+                                        <button
+                                            onClick={() => handleCapture('copy')}
+                                            disabled={isCapturing}
+                                            className="flex-1 bg-gray-900 text-white py-3 rounded-lg hover:bg-black transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-gray-200"
+                                        >
+                                            <Copy className="w-5 h-5" />
+                                            {t.copyImage}
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+
+                            {/* Status Notification */}
+                            {(captureStatus || isScanning) && (
+                                <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 animate-slide-down w-[90%] max-w-xs sm:max-w-sm">
+                                    <div className={`px-4 py-3 rounded-lg shadow-xl font-medium border text-sm sm:text-base ${
+                                        captureStatus.includes('Success') || captureStatus.includes('successful') || captureStatus.includes('berhasil') || captureStatus.includes('Berhasil')
+                                            ? 'bg-gray-900 text-white border-gray-900' 
+                                            : 'bg-white text-gray-900 border-gray-200'
+                                    }`}>
+                                        <div className="flex items-center justify-center gap-2">
+                                            {(captureStatus.includes('Processing') || captureStatus.includes('Memproses') || isScanning) && (
+                                                <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                                </svg>
+                                            )}
+                                            <span>{captureStatus}</span>
+                                        </div>
+                                        {isScanning && scanProgress > 0 && (
+                                            <div className="mt-2">
+                                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                                    <div 
+                                                        className="bg-gray-900 h-2 rounded-full transition-all duration-300"
+                                                        style={{ width: `${scanProgress}%` }}
+                                                    ></div>
+                                                </div>
+                                                <div className="text-xs text-center mt-1">{scanProgress}%</div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Confirmation Modal */}
+                            <ConfirmModal
+                                isOpen={showResetModal}
+                                onConfirm={resetAllData}
+                                onCancel={() => setShowResetModal(false)}
+                                title={t.resetTitle}
+                                message={t.resetMessage}
+                                confirmText={t.reset}
+                                cancelText={t.cancel}
+                            />
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<SplitBill />);
+    </script>
+</body>
+</html>

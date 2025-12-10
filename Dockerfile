@@ -1,20 +1,23 @@
-FROM node:14-slim
+# Dockerfile for Bun
+FROM oven/bun:slim as base
 
-# Create app directory
+# Set the working directory
 WORKDIR /app
 
-# Install app dependencies
-# A wildcard is used to ensure both package.json AND package-lock.json are copied
-# where available (npm@5+)
-COPY package*.json ./
+# Copy package.json and package-lock.json
+COPY package.json bun.lockb* ./
 
-RUN apt-get update || : && apt-get install python3 xserver-xorg-dev libxi-dev libxext-dev -y
+# Install dependencies
+# RUN bun install --production
 
-RUN npm install
-# If you are building your code for production
-# RUN npm ci --only=production
-# Bundle app source
-EXPOSE 3100
+# Copy the application files
 COPY . .
 
-CMD [ "node", "server.js" ]
+# Expose the port
+EXPOSE 3000
+
+# Set environment variables
+ENV NODE_ENV=production
+
+# Run the server
+CMD ["bun", "start"]
